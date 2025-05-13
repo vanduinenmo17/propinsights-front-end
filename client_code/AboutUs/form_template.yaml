@@ -1,0 +1,10 @@
+components_by_slot:
+  main_slot:
+  - layout_properties: {}
+    name: label_1
+    properties: {text: This is the about us page!}
+    type: Label
+is_package: true
+layout:
+  form_event_bindings: {show: form_show}
+  type: form:Homepage
