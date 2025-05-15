@@ -1,5 +1,6 @@
 from ._anvil_designer import AboutUsTemplate
 from anvil import *
+import anvil.server
 
 
 class AboutUs(AboutUsTemplate):

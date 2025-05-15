@@ -1,5 +1,6 @@
 from ._anvil_designer import DataDashboardTemplate
 from anvil import *
+import anvil.server
 
 
 class DataDashboard(DataDashboardTemplate):
