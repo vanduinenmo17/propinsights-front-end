@@ -1047,12 +1047,13 @@ div.plot-container.plotly svg.main-svg {
     --anvil-spinner-bg: %color:Surface Variant%;
 }
 
-/* Target every DataGrid row container on hover */
-.anvil-data-row-panel:hover {
+/* Highlight any row you gave the role="table-row" on hover */
+.anvil-role-table-row:hover {
   background-color: var(--md-sys-color-surface-variant) !important;
   cursor: pointer !important;
 }
-/* Smooth transition for that hover change */
-.anvil-data-row-panel {
+
+/* Smooth transition for those same rows */
+.anvil-role-table-row {
   transition: background-color 0.2s ease;
 }

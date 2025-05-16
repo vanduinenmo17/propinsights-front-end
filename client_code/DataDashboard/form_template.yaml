@@ -12,11 +12,12 @@ components_by_slot:
   - components:
     - layout_properties: {}
       name: repeating_panel_1
-      properties: {background: '', item_template: DataDashboard.RowTemplate1, role: tonal-card}
+      properties: {background: 'theme:On Secondary', foreground: '', item_template: DataDashboard.RowTemplate1, role: tonal-card}
       type: RepeatingPanel
     layout_properties: {}
     name: data_grid_1
     properties:
+      background: ''
       columns:
       - {data_key: LAT, expand: false, id: JKSDUP, title: LAT}
       - {data_key: LON, expand: false, id: VJQQOR, title: LON}
