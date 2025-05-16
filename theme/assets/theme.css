@@ -1046,3 +1046,12 @@ div.plot-container.plotly svg.main-svg {
 .anvil-spinner {
     --anvil-spinner-bg: %color:Surface Variant%;
 }
+
+/* Highlight every DataGrid row on hover */
+.anvil-data-grid-body-row:hover {
+  background-color: var(--md-sys-color-surface-variant) !important;
+  cursor: pointer;
+}
+.anvil-data-grid-body-row {
+  transition: background-color 0.2s ease;
+}
