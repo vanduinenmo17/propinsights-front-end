@@ -2,8 +2,7 @@ from ._anvil_designer import DataDashboardTemplate
 from anvil import *
 import plotly.graph_objects as go
 import anvil.server
-from . import AgGridForm
-
+from ..AgGridForm import AgGridForm
 
 class DataDashboard(DataDashboardTemplate):
   def __init__(self, **properties):
@@ -26,8 +25,8 @@ class DataDashboard(DataDashboardTemplate):
     self.repeating_panel_1.items = props
 
     # ---- Ag-Grid block ----
-    self.grid_holder.clear()            # wipe anything already there
-    ag_form = AgGridForm.AgGridForm()   # make an instance
+    ag_form = AgGridForm()
+    self.grid_holder.clear()
     self.grid_holder.add_component(ag_form)
 
     demo_rows = [
@@ -35,6 +34,7 @@ class DataDashboard(DataDashboardTemplate):
       {"Address": "456 Oak Ave", "Owner": "Jane Smith","Price": 320000},
     ]
 
-    # Call the JS helper we defined in the HTML of AgGridForm
-    anvil.js.call_js("renderAgGrid", demo_rows)
+    # tell the form what to render;
+    # it’ll call renderAgGrid from its own form_show
+    ag_form.load_data(demo_rows)
     
