@@ -1,0 +1,40 @@
+components: []
+container:
+  properties:
+    html: |-
+      <center style="font-style:italic; color:#888; margin: 3em;">
+        <!-- ①  Ag-Grid styles -->
+        <link rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/ag-grid-community/styles/ag-grid.css">
+        <link rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/ag-grid-community/styles/ag-theme-alpine.css">
+
+        <!-- ②  Grid container -->
+        <div id="myGrid" class="ag-theme-alpine"
+          style="height: 500px; width: 100%;"></div>
+
+        <!-- ③  Ag-Grid script -->
+        <script src="https://cdn.jsdelivr.net/npm/ag-grid-community/dist/ag-grid-community.min.noStyle.js"></script>
+
+        <script>
+          /** Called from Python with a list of JS objects (dicts) */
+          window.renderAgGrid = function (rowData) {
+            // Build column definitions automatically from keys
+            const columnDefs = Object.keys(rowData[0] || {}).map(k => ({ field: k }));
+
+            const gridOptions = {
+              columnDefs,
+              rowData,
+              defaultColDef: { sortable: true, filter: true, resizable: true },
+              pagination: true,
+              paginationPageSize: 50
+            };
+
+            new agGrid.Grid(document.querySelector('#myGrid'), gridOptions);
+          };
+        </script>
+      </center>
+      <div anvil-slot="default"></div>
+  type: HtmlTemplate
+custom_component: true
+is_package: true

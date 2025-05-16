@@ -23,4 +23,19 @@ class DataDashboard(DataDashboardTemplate):
     props = anvil.server.call("get_table_data")
     # …and hand it straight to the RepeatingPanel:
     self.repeating_panel_1.items = props
+
+    ## Ag-Grid Table
+    # ①  Show the form that holds the grid
+    self.ag_grid_form_1.clear()
+    ag_form = AgGridForm.AgGridForm()
+    self.ag_grid_form_1.add_component(ag_form)
+
+    # ②  Example data — replace with real data later
+    demo_rows = [
+      {"Address": "123 Main St", "Owner": "John Doe",  "Price": 250000},
+      {"Address": "456 Oak Ave", "Owner": "Jane Smith","Price": 320000},
+    ]
+
+    # ③  Call the JS function defined in the HTML
+    anvil.js.call_js("renderAgGrid", demo_rows)
     
