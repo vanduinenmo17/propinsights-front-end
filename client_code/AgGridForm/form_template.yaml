@@ -2,38 +2,37 @@ components: []
 container:
   properties:
     html: |-
-      <center style="font-style:italic; color:#888; margin: 3em;">
-        <!-- ①  Ag-Grid styles -->
-        <link rel="stylesheet"
-          href="https://cdn.jsdelivr.net/npm/ag-grid-community/styles/ag-grid.css">
-        <link rel="stylesheet"
-          href="https://cdn.jsdelivr.net/npm/ag-grid-community/styles/ag-theme-alpine.css">
+      <!-- Ag-Grid CSS -->
+      <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/ag-grid-community/styles/ag-grid.css">
+      <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/ag-grid-community/styles/ag-theme-alpine.css">
 
-        <!-- ②  Grid container -->
-        <div id="myGrid" class="ag-theme-alpine"
-          style="height: 500px; width: 100%;"></div>
+      <!-- Grid container -->
+      <div id="myGrid" class="ag-theme-alpine"
+        style="height:500px;width:100%;"></div>
 
-        <!-- ③  Ag-Grid script -->
-        <script src="https://cdn.jsdelivr.net/npm/ag-grid-community/dist/ag-grid-community.min.noStyle.js"></script>
+      <!-- Ag-Grid JS -->
+      <script src="https://cdn.jsdelivr.net/npm/ag-grid-community/dist/ag-grid-community.min.noStyle.js"></script>
 
-        <script>
-          /** Called from Python with a list of JS objects (dicts) */
-          window.renderAgGrid = function (rowData) {
-            // Build column definitions automatically from keys
-            const columnDefs = Object.keys(rowData[0] || {}).map(k => ({ field: k }));
+      <script>
+        // Define the global function
+        window.renderAgGrid = function(rowData) {
+          const columnDefs = Object.keys(rowData[0] || {}).map(f => ({field:f}));
+          new agGrid.Grid(
+            document.querySelector('#myGrid'),
+            {
+              columnDefs: columnDefs,
+              rowData:      rowData,
+              defaultColDef:{sortable:true,filter:true,resizable:true},
+              pagination:true,
+              paginationPageSize:50
+            }
+          );
+        };
+      </script>
 
-            const gridOptions = {
-              columnDefs,
-              rowData,
-              defaultColDef: { sortable: true, filter: true, resizable: true },
-              pagination: true,
-              paginationPageSize: 50
-            };
-
-            new agGrid.Grid(document.querySelector('#myGrid'), gridOptions);
-          };
-        </script>
-      </center>
+      <!-- This slot lets Anvil wire up your form’s children (even if you don’t have any) -->
       <div anvil-slot="default"></div>
   type: HtmlTemplate
 custom_component: false
