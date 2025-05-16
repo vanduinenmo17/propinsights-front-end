@@ -24,3 +24,4 @@ services:
   source: /runtime/services/anvil/secrets.yml
 startup: {module: Homepage, type: form}
 startup_form: null
+uplink_visible: true
