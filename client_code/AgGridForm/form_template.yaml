@@ -36,5 +36,5 @@ container:
       </center>
       <div anvil-slot="default"></div>
   type: HtmlTemplate
-custom_component: true
+custom_component: false
 is_package: true
