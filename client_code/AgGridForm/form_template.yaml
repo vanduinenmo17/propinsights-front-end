@@ -2,38 +2,33 @@ components: []
 container:
   properties:
     html: |-
-      <!-- Ag-Grid CSS -->
+      <!-- (your existing CSS links) -->
       <link rel="stylesheet"
         href="https://cdn.jsdelivr.net/npm/ag-grid-community/styles/ag-grid.css">
       <link rel="stylesheet"
         href="https://cdn.jsdelivr.net/npm/ag-grid-community/styles/ag-theme-alpine.css">
 
-      <!-- Grid container -->
       <div id="myGrid" class="ag-theme-alpine"
         style="height:500px;width:100%;"></div>
 
-      <!-- Ag-Grid JS -->
       <script src="https://cdn.jsdelivr.net/npm/ag-grid-community/dist/ag-grid-community.min.noStyle.js"></script>
 
       <script>
-        // Define the global function
         window.renderAgGrid = function(rowData) {
-          const columnDefs = Object.keys(rowData[0] || {}).map(f => ({field:f}));
+          const columnDefs = Object.keys(rowData[0] || {}).map(f => ({ field: f }));
           new agGrid.Grid(
             document.querySelector('#myGrid'),
             {
-              columnDefs: columnDefs,
-              rowData:      rowData,
-              defaultColDef:{sortable:true,filter:true,resizable:true},
-              pagination:true,
-              paginationPageSize:50
+              columnDefs,
+              rowData,
+              defaultColDef: { sortable: true, filter: true, resizable: true },
+              pagination: true,
+              paginationPageSize: 50
             }
           );
         };
       </script>
-
-      <!-- This slot lets Anvil wire up your form’s children (even if you don’t have any) -->
       <div anvil-slot="default"></div>
   type: HtmlTemplate
-custom_component: false
+custom_component: true
 is_package: true
