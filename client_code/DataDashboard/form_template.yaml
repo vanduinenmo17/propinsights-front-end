@@ -9,10 +9,6 @@ components_by_slot:
     name: column_panel_1
     properties: {}
     type: ColumnPanel
-  - layout_properties: {}
-    name: ag_grid_form_1
-    properties: {}
-    type: form:AgGridForm
   - components:
     - layout_properties: {}
       name: repeating_panel_1

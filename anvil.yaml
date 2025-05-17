@@ -1,5 +1,8 @@
 allow_embedding: false
-dependencies: []
+dependencies:
+- dep_id: dep_m2uwz4e9aqkor2
+  resolution_hints: {app_id: TGQCF3WT6FVL2EM2, name: Tabulator, package_name: tabulator}
+  version: {version_tag: v3.0.5}
 metadata: {logo_img: 'asset:ChatGPT Image May 15, 2025, 12_10_21 PM.png', title: PropInsights}
 name: PropInsights
 native_deps: null

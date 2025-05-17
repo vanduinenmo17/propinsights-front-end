@@ -24,17 +24,6 @@ class DataDashboard(DataDashboardTemplate):
     # …and hand it straight to the RepeatingPanel:
     self.repeating_panel_1.items = props
 
-    # ---- Ag-Grid block ----
-    ag_form = AgGridForm()
-    self.grid_holder.clear()
-    self.grid_holder.add_component(ag_form)
-
-    demo_rows = [
-      {"Address": "123 Main St", "Owner": "John Doe",  "Price": 250000},
-      {"Address": "456 Oak Ave", "Owner": "Jane Smith","Price": 320000},
-    ]
-
-    # tell the form what to render;
-    # it’ll call renderAgGrid from its own form_show
-    ag_form.load_data(demo_rows)
+    # ---- Tabulator block ----
+    demo_data = [{'car': True, 'name': 'Elizabeth Maureen', 'dob': datetime.date(1974, 10, 25), 'col': 'blue', 'id': 0, 'gender': 'female', 'progress': 80, 'media': <anvil.BlobMedia object>, 'rating': 4}, {'car': True, 'name': 'Amira Grace', 'dob': datetime.date(2002, 7, 26), 'col': 'yellow', 'id': 1, 'gender': 'female', 'progress': 30, 'media': <anvil.BlobMedia object>, 'rating': 3}, {'car': False, 'name': 'Aaron Kathleen', 'dob': datetime.date(2001, 7, 1), 'col': 'red', 'id': 2, 'gender': 'male', 'progress': 98, 'media': <anvil.BlobMedia object>, 'rating': 4}, {'car': False, 'name': 'Roland Mary', 'dob': datetime.date(2004, 9, 3), 'col': 'green', 'id': 3, 'gender': 'male', 'progress': 44, 'media': <anvil.BlobMedia object>, 'rating': 0}, {'car': False, 'name': 'Chris Susan', 'dob': datetime.date(1967, 5, 3), 'col': 'blue', 'id': 4, 'gender': 'male', 'progress': 9, 'media': <anvil.BlobMedia object>, 'rating': 2}]
     
