@@ -9,20 +9,9 @@ components_by_slot:
     name: column_panel_1
     properties: {}
     type: ColumnPanel
-  - components:
-    - layout_properties: {}
-      name: repeating_panel_1
-      properties: {background: 'theme:On Secondary', foreground: '', item_template: DataDashboard.RowTemplate1, role: tonal-card}
-      type: RepeatingPanel
-    layout_properties: {}
-    name: data_grid_1
-    properties:
-      background: ''
-      columns:
-      - {data_key: LAT, expand: false, id: JKSDUP, title: LAT}
-      - {data_key: LON, expand: false, id: VJQQOR, title: LON}
-      - {data_key: Address, id: OJLQEN, title: Address}
-      role: tonal-data-grid
-    type: DataGrid
+  - layout_properties: {}
+    name: tabulator
+    properties: {auto_columns: true, header_visible: true}
+    type: form:dep_m2uwz4e9aqkor2:Tabulator
 is_package: true
 layout: {type: 'form:Homepage'}
