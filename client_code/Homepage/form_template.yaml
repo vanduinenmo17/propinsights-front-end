@@ -4,32 +4,28 @@ components:
   name: content_panel
   properties: {col_widths: '{}'}
   type: ColumnPanel
-- components: []
-  layout_properties: {slot: nav-right}
-  name: navbar_links
-  properties: {align: left}
-  type: FlowPanel
 - components:
   - event_bindings: {click: data_dashboard_link_click}
-    layout_properties: {grid_position: 'EGBMVS,KNLQLD'}
     name: data_dashboard_link
     properties: {icon: 'fa:home', role: null, text: Home}
     type: Link
   - event_bindings: {click: about_us_link_click}
-    layout_properties: {grid_position: 'DJOZJX,XLIOXT'}
     name: about_us_link
     properties: {icon: 'fa:sticky-note', text: About Us}
     type: Link
   - event_bindings: {click: contact_us_link_click}
-    layout_properties: {grid_position: 'XLVDBR,PMNEGP'}
     name: contact_us_link
     properties: {icon: 'fa:address-card', text: Contact Us}
     type: Link
   - event_bindings: {click: button_1_click}
-    layout_properties: {grid_position: 'PSMDKZ,XMNLQS'}
     name: logout_button
     properties: {role: filled-button, text: Logout}
     type: Button
+  layout_properties: {slot: nav-right}
+  name: navbar_links
+  properties: {align: left}
+  type: FlowPanel
+- components: []
   layout_properties: {slot: left-nav}
   name: column_panel_1
   properties: {}

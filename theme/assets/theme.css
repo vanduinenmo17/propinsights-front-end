@@ -1046,18 +1046,3 @@ div.plot-container.plotly svg.main-svg {
 .anvil-spinner {
     --anvil-spinner-bg: %color:Surface Variant%;
 }
-
-/* When you hover any row with role="table-row", color each cell */
-.anvil-role-table-row:hover .data-row-col {
-  background-color: var(--md-sys-color-surface-variant) !important;
-}
-
-/* Make the pointer show over the entire row */
-.anvil-role-table-row:hover {
-  cursor: pointer !important;
-}
-
-/* Smooth transition on the cells */
-.anvil-role-table-row .data-row-col {
-  transition: background-color 0.2s ease;
-}
