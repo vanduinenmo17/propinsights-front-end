@@ -25,7 +25,12 @@ components:
   name: navbar_links
   properties: {align: left}
   type: FlowPanel
-- components: []
+- components:
+  - data_bindings: []
+    layout_properties: {grid_position: 'MIVLGV,WULEHN'}
+    name: dataset_select
+    properties: {placeholder: None Selected}
+    type: form:dep_vdi8mw3mp30woi:MultiSelectDropDown
   layout_properties: {slot: left-nav}
   name: column_panel_1
   properties: {}
