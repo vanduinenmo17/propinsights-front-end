@@ -11,7 +11,7 @@ components_by_slot:
     type: ColumnPanel
   - layout_properties: {}
     name: tabulator
-    properties: {auto_columns: true, header_visible: true}
+    properties: {auto_columns: true, header_visible: true, pagination_size: 50}
     type: form:dep_m2uwz4e9aqkor2:Tabulator
 is_package: true
 layout: {type: 'form:Homepage'}

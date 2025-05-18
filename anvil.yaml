@@ -24,6 +24,9 @@ db_schema:
     - admin_ui: {order: 6, width: 200}
       name: remembered_logins
       type: simpleObject
+    - admin_ui: {order: 7, width: 200}
+      name: signed_up
+      type: datetime
     server: full
     title: Users
 dependencies:
@@ -52,9 +55,9 @@ services:
 - client_config: {}
   server_config: {}
   source: /runtime/services/anvil/secrets.yml
-- client_config: {allow_remember_me: true, allow_signup: false, confirm_email: true, enable_automatically: true, remember_me_days: 30, require_secure_passwords: true, use_email: true, use_google: false}
+- client_config: {allow_remember_me: true, allow_signup: true, confirm_email: true, enable_automatically: true, remember_me_days: 30, require_secure_passwords: true, use_email: true, use_google: false}
   server_config: {user_table: users}
   source: /runtime/services/anvil/users.yml
-startup: {module: Homepage, type: form}
+startup: {module: DataDashboard, type: form}
 startup_form: null
 uplink_visible: true

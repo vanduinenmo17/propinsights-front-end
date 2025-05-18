@@ -30,4 +30,11 @@ class Homepage(HomepageTemplate):
     self.contact_us_link.role = ''
     self.about_us_link.role = ''
 
+  def button_1_click(self, **event_args):
+    """This method is called when the button is clicked"""
+    user = anvil.users.get_user()
+    if user:
+      anvil.users.logout()
+      anvil.users.login_with_form()
+
 
