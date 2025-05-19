@@ -28,3 +28,10 @@ class DataDashboard(DataDashboardTemplate):
     #   {"title": "LON", "field": "LON"},
     #   {"title": "Address", "field": "Address"}
     # ]
+
+  def select_data_button_click(self, **event_args):
+    """This method is called when the button is clicked"""
+    if self.data_select_panel.visible is False:
+      self.data_select_panel.visible = True
+    else: 
+      self.data_select_panel.visible = False

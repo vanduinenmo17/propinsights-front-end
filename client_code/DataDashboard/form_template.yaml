@@ -1,17 +1,36 @@
 components_by_slot:
   main_slot:
+  - event_bindings: {click: select_data_button_click}
+    layout_properties: {}
+    name: select_data_button
+    properties: {align: center, icon: 'fa:filter', text: Select Data}
+    type: Button
   - components:
-    - layout_properties: {grid_position: 'MGIGKN,QZQXLG'}
+    - layout_properties: {expand: true, width: 965}
       name: mapbox_map
       properties: {}
       type: Plot
+    - components:
+      - layout_properties: {grid_position: 'YORVKF,QGFFKD'}
+        name: multi_select_drop_down_1
+        properties: {visible: true}
+        type: form:dep_vdi8mw3mp30woi:MultiSelectDropDown
+      layout_properties: {expand: true, width: 282}
+      name: data_select_panel
+      properties: {visible: true}
+      type: ColumnPanel
+    layout_properties: {}
+    name: flow_panel_1
+    properties: {gap: none, spacing_above: none, spacing_below: none}
+    type: FlowPanel
+  - components:
+    - layout_properties: {grid_position: 'DRNSAQ,WTFWNA'}
+      name: tabulator
+      properties: {auto_columns: true, header_visible: true, pagination_size: 50}
+      type: form:dep_m2uwz4e9aqkor2:Tabulator
     layout_properties: {}
     name: column_panel_1
     properties: {}
     type: ColumnPanel
-  - layout_properties: {}
-    name: tabulator
-    properties: {auto_columns: true, header_visible: true, pagination_size: 50}
-    type: form:dep_m2uwz4e9aqkor2:Tabulator
 is_package: true
 layout: {type: 'form:Homepage'}

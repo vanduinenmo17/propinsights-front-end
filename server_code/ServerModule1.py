@@ -16,7 +16,7 @@ import plotly.graph_objects as go
 # them with @anvil.server.callable.
 def get_absentee_owners_data():
   query = """
-  SELECT LAT, LON, Address FROM `real-estate-data-processing.DataLists.AbsenteeOwners` LIMIT 10000
+  SELECT LAT, LON, Address FROM `real-estate-data-processing.DataLists.AbsenteeOwners` LIMIT 1000
   """
   df = anvil.server.call('get_bigquery_data', query)
   df = pd.DataFrame.from_dict(df)
