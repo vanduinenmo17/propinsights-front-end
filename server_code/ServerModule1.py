@@ -14,7 +14,7 @@ import plotly.graph_objects as go
 #
 # To allow anvil.server.call() to call functions here, we mark
 # them with @anvil.server.callable.
-def get_absentee_owners_data():
+def get_property_data():
   query = """
   SELECT LAT, LON, Address FROM `real-estate-data-processing.DataLists.AbsenteeOwners` LIMIT 1000
   """
@@ -24,12 +24,12 @@ def get_absentee_owners_data():
 
 @anvil.server.callable
 def get_map_data():
-  df = get_absentee_owners_data()
+  df = get_property_data()
   map_data = go.Scattermapbox(lat=df['LAT'], lon=df['LON'], mode='markers')
   return map_data
 
 @anvil.server.callable
 def get_table_data():
-  df = get_absentee_owners_data()
+  df = get_property_data()
   records = df.to_dict(orient="records")
   return records
