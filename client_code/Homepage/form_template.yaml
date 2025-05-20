@@ -35,8 +35,8 @@ components:
   properties: {}
   type: ColumnPanel
 - layout_properties: {slot: title}
-  name: label_1
-  properties: {role: title, text: PropInsights}
+  name: title_label
+  properties: {role: title, text: Prop Insights}
   type: Label
 container:
   properties: {html: '@theme:standard-page.html'}

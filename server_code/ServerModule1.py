@@ -4,9 +4,6 @@ from anvil.tables import app_tables
 import anvil.users
 import anvil.secrets
 import anvil.server
-
-# This is a server module. It runs on the Anvil server,
-# rather than in the user's browser.
 import pandas as pd
 import plotly.graph_objects as go
 # This is a server module. It runs on the Anvil server,
@@ -22,7 +19,7 @@ def get_property_data(query: str):
 @anvil.server.callable
 def get_map_data(query: str):
   df = get_property_data(query)
-  map_data = go.Scattermapbox(lat=df['LAT'], lon=df['LON'], mode='markers')
+  map_data = go.Scattermapbox(lat=df['LAT'], lon=df['LON'], mode='markers', text=df['Address'], hoverinfo='text')
   return map_data
 
 @anvil.server.callable

@@ -6,6 +6,7 @@ from anvil.tables import app_tables
 import anvil.users
 import anvil.server
 from tabulator.Tabulator import Tabulator
+from .. import utils
 
 class DataDashboard(DataDashboardTemplate):
   def __init__(self, **properties):
@@ -30,8 +31,26 @@ class DataDashboard(DataDashboardTemplate):
 
     self.data_select_panel.visible = True
 
+    # ---- Dropdown options ----
     self.dataset_select.items = [
       {"key": "Absentee Owners", "value": "AbsenteeOwners"}
+    ]
+
+    self.county_select.items = [
+      {"key": "Adams", "value": "Adams"}
+    ]
+
+    self.city_select.items = [
+      {"key": "Thornton", "value": "THORNTON"},
+      {"key": "Westminster", "value": "WESTMINSTER"},
+      {"key": "Bennett", "value": "BENNETT"},
+      {"key": "Commerce City", "value": "COMMERCE CITY"},
+      {"key": "Brighton", "value": "BRIGHTON"},
+      {"key": "Federal Heights", "value": "FEDERAL HEIGHTS"},
+      {"key": "Aurora", "value": "AURORA"},
+      {"key": "Northglenn", "value": "NORTHGLENN"},
+      {"key": "Arvada", "value": "ARVADA"},
+      {"key": "Lochbuie", "value": "LOCHBUIE"},
     ]
 
     
@@ -46,8 +65,23 @@ class DataDashboard(DataDashboardTemplate):
       alert('Please select a dataset')
     else:
       query = f"""
-      SELECT LAT, LON, Address FROM `real-estate-data-processing.DataLists.{self.dataset_select.selected[0]}` LIMIT 10000 
+      SELECT LAT, LON, Address FROM `real-estate-data-processing.DataLists.{self.dataset_select.selected[0]}`
       """
+      ## County if statement
+      if not self.county_select.selected:
+        county_where_query = ''
+      else: 
+        county_where_query = f'WHERE County {utils.list_to_in_phrase(self.county_select.selected)}'
+      ## City if statement
+      if not self.city_select.selected:
+        city_where_query = ''
+      elif county_where_query == '':
+        city_where_query =  f'WHERE City {utils.list_to_in_phrase(self.city_select.selected)}'
+      else:
+        city_where_query = f'AND City {utils.list_to_in_phrase(self.city_select.selected)}'
+      ## Construct full query
+      query = query + county_where_query + city_where_query
+      print(query)
       self.mapbox_map.data = anvil.server.call('get_map_data', query)
       self.tabulator.data = anvil.server.call('get_table_data', query)
     
