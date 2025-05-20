@@ -46,8 +46,8 @@ class DataDashboard(DataDashboardTemplate):
       alert('Please select a dataset')
     else:
       query = f"""
-      LAT, LON, Address FROM `real-estate-data-processing.DataLists.{self.dataset_select.selected[0]}` LIMIT 10000 
+      SELECT LAT, LON, Address FROM `real-estate-data-processing.DataLists.{self.dataset_select.selected[0]}` LIMIT 10000 
       """
       self.mapbox_map.data = anvil.server.call('get_map_data', query)
       self.tabulator.data = anvil.server.call('get_table_data', query)
-      
+    
