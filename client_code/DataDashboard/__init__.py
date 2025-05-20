@@ -13,16 +13,20 @@ class DataDashboard(DataDashboardTemplate):
     self.init_components(**properties)
     ## User Login Prompt
     anvil.users.login_with_form()
+    ## Init query
+    query = """
+    SELECT LAT, LON, Address FROM `real-estate-data-processing.DataLists.AbsenteeOwners` LIMIT 100
+    """
     ## Initialize Map
     # Add access token and center map on Denver
     token = "pk.eyJ1IjoidmFuZHVpbmVubW8xNyIsImEiOiJjbTkzMmg4OTIwaHZjMmpvamR2OXN1YWp1In0.SGzbF3O6SdZqfDsAsSoiaw"
     self.mapbox_map.layout.mapbox = dict(accesstoken=token, center=dict(lat=39.747508, lon=-104.987833), zoom=8)
     self.mapbox_map.layout.margin = dict(t=0, b=0, l=0, r=0)
     # Add title to map and pull data to display
-    self.mapbox_map.data = anvil.server.call('get_map_data')
+    self.mapbox_map.data = anvil.server.call('get_map_data', query)
 
     # ---- Tabulator block ----
-    self.tabulator.data = anvil.server.call('get_table_data')
+    self.tabulator.data = anvil.server.call('get_table_data', query)
 
     self.data_select_panel.visible = True
 
@@ -38,5 +42,12 @@ class DataDashboard(DataDashboardTemplate):
 
   def pull_data_button_click(self, **event_args):
     """This method is called when the button is clicked"""
-    print(self.dataset_select.selected)
+    if not self.dataset_select.selected:
+      alert('Please select a dataset')
+    else:
+      query = f"""
+      LAT, LON, Address FROM `real-estate-data-processing.DataLists.{self.dataset_select.selected[0]}` LIMIT 10000 
+      """
+      self.mapbox_map.data = anvil.server.call('get_map_data', query)
+      self.tabulator.data = anvil.server.call('get_table_data', query)
       
