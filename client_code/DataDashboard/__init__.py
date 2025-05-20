@@ -33,5 +33,6 @@ class DataDashboard(DataDashboardTemplate):
     """This method is called when the button is clicked"""
     if self.data_select_panel.visible is False:
       self.data_select_panel.visible = True
+      # self.data_select_panel
     else: 
       self.data_select_panel.visible = False

@@ -15,9 +15,9 @@ components_by_slot:
         name: multi_select_drop_down_1
         properties: {visible: true}
         type: form:dep_vdi8mw3mp30woi:MultiSelectDropDown
-      layout_properties: {expand: true, width: 282}
+      layout_properties: {expand: true, width: 965}
       name: data_select_panel
-      properties: {visible: true}
+      properties: {spacing_above: small, visible: true}
       type: ColumnPanel
     layout_properties: {}
     name: flow_panel_1
