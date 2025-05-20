@@ -23,16 +23,30 @@ class DataDashboard(DataDashboardTemplate):
 
     # ---- Tabulator block ----
     self.tabulator.data = anvil.server.call('get_table_data')
-    # self.tabulator.columns = [
-    #   {"title": "LAT", "field": "LAT"},
-    #   {"title": "LON", "field": "LON"},
-    #   {"title": "Address", "field": "Address"}
-    # ]
 
+    ## Set sizing of components in flow panel
+    self.mapbox_map.width = "50%"
+    self.data_select_panel.width = "50%"
+    self.data_select_panel.visible = True
+
+    
   def select_data_button_click(self, **event_args):
     """This method is called when the button is clicked"""
-    if self.data_select_panel.visible is False:
-      self.data_select_panel.visible = True
-      # self.data_select_panel
-    else: 
-      self.data_select_panel.visible = False
+    # Flip visibility
+    self.data_select_panel.visible = not self.data_select_panel.visible
+
+    # Clear out everything in the FlowPanel
+    self.flow_panel.clear()
+
+    if self.data_select_panel.visible:
+      # Explicitly set both widths to 50%
+      self.mapbox_map.width = "50%"
+      self.data_select_panel.width = "50%"
+      self.flow_panel.add_component(self.mapbox_map)
+      self.flow_panel.add_component(self.data_select_panel)
+    else:
+      # Explicitly set map to 100%, and data_select_panel to 100% (important)
+      self.mapbox_map.width = "100%"
+      self.data_select_panel.width = "100%"   # <-- add this line!
+      self.flow_panel.add_component(self.mapbox_map)
+      
