@@ -28,8 +28,12 @@ class DataDashboard(DataDashboardTemplate):
 
     # ---- Tabulator block ----
     self.tabulator.data = anvil.server.call('get_table_data', query)
-
+    
+    keys_list = list(self.tabulator.data[0].keys())
+    
     self.data_select_panel.visible = True
+
+    self.fields_dropdown.items = keys_list
 
     # ---- Dropdown options ----
     self.dataset_select.items = [

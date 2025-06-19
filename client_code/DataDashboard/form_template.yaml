@@ -56,6 +56,20 @@ components_by_slot:
     - name: fields_dropdown
       properties: {}
       type: DropDown
+    - name: type_dropdown
+      properties: {}
+      type: DropDown
+    - name: value_box
+      properties: {}
+      type: TextBox
+    - layout_properties: {}
+      name: filter_button
+      properties: {text: Filter}
+      type: Button
+    - layout_properties: {}
+      name: reset_button
+      properties: {text: Reset}
+      type: Button
     layout_properties: {}
     name: filter_panel
     properties: {}
