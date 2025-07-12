@@ -59,15 +59,18 @@ components_by_slot:
     - name: type_dropdown
       properties: {}
       type: DropDown
-    - name: value_box
-      properties: {}
-      type: TextBox
     - layout_properties: {}
+      name: value_box
+      properties: {placeholder: Value}
+      type: TextBox
+    - event_bindings: {click: filter_button_click}
+      layout_properties: {}
       name: filter_button
       properties: {text: Filter}
       type: Button
-    - layout_properties: {}
-      name: reset_button
+    - event_bindings: {click: reset_filter_button_click}
+      layout_properties: {}
+      name: reset_filter_button
       properties: {text: Reset}
       type: Button
     layout_properties: {}

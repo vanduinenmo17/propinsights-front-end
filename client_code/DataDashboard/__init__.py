@@ -18,46 +18,31 @@ class DataDashboard(DataDashboardTemplate):
     query = """
     SELECT LAT, LON, Address FROM `real-estate-data-processing.DataLists.AbsenteeOwners` LIMIT 100
     """
-    ## Initialize Map
+
+    # ---- Dataset Selection Dropdowns ----
+    self.dataset_select.items = utils.get_dataset_dict()
+    self.county_select.items = utils.get_county_dict()
+    self.city_select.items = utils.get_city_dict()
+    
+    # ---- Mapbox Map ----
     # Add access token and center map on Denver
     token = "pk.eyJ1IjoidmFuZHVpbmVubW8xNyIsImEiOiJjbTkzMmg4OTIwaHZjMmpvamR2OXN1YWp1In0.SGzbF3O6SdZqfDsAsSoiaw"
     self.mapbox_map.layout.mapbox = dict(accesstoken=token, center=dict(lat=39.747508, lon=-104.987833), zoom=8)
     self.mapbox_map.layout.margin = dict(t=0, b=0, l=0, r=0)
     # Add title to map and pull data to display
     self.mapbox_map.data = anvil.server.call('get_map_data', query)
-
-    # ---- Tabulator block ----
+    
+    # ---- Tabulator Data Table ----
     self.tabulator.data = anvil.server.call('get_table_data', query)
     
     keys_list = list(self.tabulator.data[0].keys())
     
     self.data_select_panel.visible = True
 
+    # ---- Tabulator Data Table Filter ----
     self.fields_dropdown.items = keys_list
-
-    # ---- Dropdown options ----
-    self.dataset_select.items = [
-      {"key": "Absentee Owners", "value": "AbsenteeOwners"}
-    ]
-
-    self.county_select.items = [
-      {"key": "Adams", "value": "Adams"}
-    ]
-
-    self.city_select.items = [
-      {"key": "Thornton", "value": "THORNTON"},
-      {"key": "Westminster", "value": "WESTMINSTER"},
-      {"key": "Bennett", "value": "BENNETT"},
-      {"key": "Commerce City", "value": "COMMERCE CITY"},
-      {"key": "Brighton", "value": "BRIGHTON"},
-      {"key": "Federal Heights", "value": "FEDERAL HEIGHTS"},
-      {"key": "Aurora", "value": "AURORA"},
-      {"key": "Northglenn", "value": "NORTHGLENN"},
-      {"key": "Arvada", "value": "ARVADA"},
-      {"key": "Lochbuie", "value": "LOCHBUIE"},
-    ]
-
-    
+    self.type_dropdown.items = ['>','<','>=','<=','like','!=']
+  
   def select_data_button_click(self, **event_args):
     """This method is called when the button is clicked"""
     # Flip visibility
@@ -88,4 +73,19 @@ class DataDashboard(DataDashboardTemplate):
       print(query)
       self.mapbox_map.data = anvil.server.call('get_map_data', query)
       self.tabulator.data = anvil.server.call('get_table_data', query)
+
+  def filter_button_click(self, **event_args):
+    """This method is called when the button is clicked"""
+    field = self.fields_dropdown.selected_value
+    symbol = self.type_dropdown.selected_value
+    value = self.value_box.text
+    # print(field, symbol, value)
+
+    self.tabulator.set_filter(field, symbol, value)
+    pass
+
+  def reset_filter_button_click(self, **event_args):
+    """This method is called when the button is clicked"""
+    self.tabulator.clear_filter()
+    self.value_box.text = ""
     

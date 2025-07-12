@@ -23,3 +23,30 @@ def list_to_in_phrase(lst: list, with_quotes: bool = True) -> str:
   else:
     quoted = [f"{p}" for p in lst]
   return f" IN ({', '.join(quoted)}) "
+
+def get_dataset_dict():
+  dict = [
+    {"key": "Absentee Owners", "value": "AbsenteeOwners"}
+  ]
+  return dict
+
+def get_county_dict():
+  dict = [
+    {"key": "Adams", "value": "Adams"}
+  ]
+  return dict
+
+def get_city_dict():
+  dict = [
+    {"key": "Thornton", "value": "THORNTON"},
+    {"key": "Westminster", "value": "WESTMINSTER"},
+    {"key": "Bennett", "value": "BENNETT"},
+    {"key": "Commerce City", "value": "COMMERCE CITY"},
+    {"key": "Brighton", "value": "BRIGHTON"},
+    {"key": "Federal Heights", "value": "FEDERAL HEIGHTS"},
+    {"key": "Aurora", "value": "AURORA"},
+    {"key": "Northglenn", "value": "NORTHGLENN"},
+    {"key": "Arvada", "value": "ARVADA"},
+    {"key": "Lochbuie", "value": "LOCHBUIE"},
+  ]
+  return dict
