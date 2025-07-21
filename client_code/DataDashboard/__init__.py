@@ -88,4 +88,13 @@ class DataDashboard(DataDashboardTemplate):
     """This method is called when the button is clicked"""
     self.tabulator.clear_filter()
     self.value_box.text = ""
+
+  # def mapbox_map_click(self, points, **event_args):
+  #   """This method is called when a data point is clicked."""
+  #   if points:
+  #     # 'points' is a list of dictionaries, each representing a clicked point.
+  #     # For Mapbox maps, each dictionary typically contains 'lat' and 'lon' keys.
+  #     clicked_point = points[0]
+  #     lat = clicked_point.get('lat')
+  #     print(lat)
     
