@@ -55,7 +55,7 @@ class DataDashboard(DataDashboardTemplate):
 
     # ---- Tabulator Data Table Filter ----
     self.fields_dropdown.items = keys_list
-    self.type_dropdown.items = ['>','<','>=','<=','like','!=']
+    self.type_dropdown.items = ['=','>','<','>=','<=','like','!=']
   
   def select_data_button_click(self, **event_args):
     """This method is called when the button is clicked"""
@@ -123,3 +123,5 @@ class DataDashboard(DataDashboardTemplate):
       # Look up the address from the prebuilt dictionary
       address = self.latlon_to_address.get(key, "Unknown address")
       print(f"Clicked address: {address}")
+
+      self.tabulator.set_filter('Address', '=', address)
