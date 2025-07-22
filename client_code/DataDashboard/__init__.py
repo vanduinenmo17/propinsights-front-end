@@ -31,6 +31,7 @@ class DataDashboard(DataDashboardTemplate):
     self.mapbox_map.layout.margin = dict(t=0, b=0, l=0, r=0)
     # Add title to map and pull data to display
     self.mapbox_map.data = anvil.server.call('get_map_data', query)
+    self.mapbox_map.config = {'scrollZoom': True}
     
     # ---- Tabulator Data Table ----
     self.tabulator.data = anvil.server.call('get_table_data', query)
