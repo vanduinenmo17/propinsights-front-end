@@ -96,7 +96,5 @@ class DataDashboard(DataDashboardTemplate):
       # 'points' is a list of dictionaries, each representing a clicked point.
       # For Mapbox maps, each dictionary typically contains 'lat' and 'lon' keys.
       clicked_point = points[0]
-      # lat = clicked_point.get('lat')
       print(clicked_point)
-      # print(lat)
     

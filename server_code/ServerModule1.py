@@ -19,7 +19,7 @@ def get_property_data(query: str):
 @anvil.server.callable
 def get_map_data(query: str):
   df = get_property_data(query)
-  map_data = go.Scattermapbox(lat=df['LAT'], lon=df['LON'], mode='markers', text=df['Address'], hoverinfo='text')
+  map_data = go.Scattermapbox(lat=df['LAT'], lon=df['LON'], mode='markers', text=df['Address'], hoverinfo='text', customdata=df[['Address']])
   return map_data
 
 @anvil.server.callable
