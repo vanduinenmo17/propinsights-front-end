@@ -26,12 +26,25 @@ class DataDashboard(DataDashboardTemplate):
     
     # ---- Mapbox Map ----
     # Add access token and center map on Denver
-    token = "pk.eyJ1IjoidmFuZHVpbmVubW8xNyIsImEiOiJjbTkzMmg4OTIwaHZjMmpvamR2OXN1YWp1In0.SGzbF3O6SdZqfDsAsSoiaw"
-    self.mapbox_map.layout.mapbox = dict(accesstoken=token, center=dict(lat=39.747508, lon=-104.987833), zoom=8)
-    self.mapbox_map.layout.margin = dict(t=0, b=0, l=0, r=0)
+    # token = "pk.eyJ1IjoidmFuZHVpbmVubW8xNyIsImEiOiJjbTkzMmg4OTIwaHZjMmpvamR2OXN1YWp1In0.SGzbF3O6SdZqfDsAsSoiaw"
+    # self.mapbox_map.layout.mapbox = dict(accesstoken=token, center=dict(lat=39.747508, lon=-104.987833), zoom=8)
+    # self.mapbox_map.layout.margin = dict(t=0, b=0, l=0, r=0)
     # Add title to map and pull data to display
-    self.mapbox_map.data = anvil.server.call('get_map_data', query)
+    # self.mapbox_map.data = anvil.server.call('get_map_data', query)
+    # self.mapbox_map.config = {'scrollZoom': True}
+
+    ## Test
+    # Call and unpack result
+    map_result = anvil.server.call('get_map_data', query)
+    
+    # Assign full figure to the Plot component
+    self.mapbox_map.figure = map_result['figure']
+    
+    # Save lookup dictionary
+    self.latlon_to_address = map_result['lookup']
+
     self.mapbox_map.config = {'scrollZoom': True}
+    ## End Test
     
     # ---- Tabulator Data Table ----
     self.tabulator.data = anvil.server.call('get_table_data', query)
@@ -97,11 +110,16 @@ class DataDashboard(DataDashboardTemplate):
   #     # For Mapbox maps, each dictionary typically contains 'lat' and 'lon' keys.
   #     clicked_point = points[0]
   #     print(clicked_point)
-
   def mapbox_map_click(self, points, **event_args):
+    """This method is called when a data point is clicked on the map."""
     if points:
       clicked_point = points[0]
-      address = clicked_point.get('customdata')  # Now should work
-      print(clicked_point)
+
+      # Get lat/lon and round to 6 decimals for consistency with lookup keys
+      lat = round(clicked_point['lat'], 6)
+      lon = round(clicked_point['lon'], 6)
+      key = f"{lat},{lon}"
+
+      # Look up the address from the prebuilt dictionary
+      address = self.latlon_to_address.get(key, "Unknown address")
       print(f"Clicked address: {address}")
-    
