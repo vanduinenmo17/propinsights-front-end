@@ -43,10 +43,9 @@ components:
   name: column_panel_1
   properties: {}
   type: ColumnPanel
-- data_bindings: []
-  layout_properties: {slot: title}
-  name: title_label
-  properties: {font: Roboto Slab, icon: '', icon_align: right_edge, role: title, text: PropInsights}
+- layout_properties: {slot: title}
+  name: label_1
+  properties: {font: Roboto Slab, icon: '', role: title, text: PropInsights}
   type: Label
 container:
   properties: {html: '@theme:standard-page.html'}
