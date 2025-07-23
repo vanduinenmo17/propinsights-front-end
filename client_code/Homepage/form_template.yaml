@@ -10,6 +10,10 @@ components:
   properties: {align: left}
   type: FlowPanel
 - components:
+  - layout_properties: {grid_position: 'PBQHTS,BSZZKJ'}
+    name: landing_page_link
+    properties: {icon: 'fa:home', text: Home}
+    type: Link
   - event_bindings: {click: data_dashboard_link_click}
     layout_properties: {grid_position: 'TYSWXF,RIRLCZ'}
     name: data_dashboard_link
