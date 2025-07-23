@@ -30,10 +30,14 @@ components:
     name: contact_us_link
     properties: {icon: 'fa:address-card', text: Contact Us}
     type: Link
+  - layout_properties: {grid_position: 'MBGMKT,FKHUYR'}
+    name: spacer_1
+    properties: {height: 550}
+    type: Spacer
   - event_bindings: {click: button_1_click}
     layout_properties: {grid_position: 'JZUVRV,DWEUJB'}
     name: logout_button
-    properties: {role: filled-button, text: Logout}
+    properties: {role: filled-button, text: Log Out}
     type: Button
   layout_properties: {slot: left-nav}
   name: column_panel_1
