@@ -1,13 +1,14 @@
 components_by_slot:
   main_slot:
   - components:
-    - layout_properties: {grid_position: 'YGHZTA,VNVWSK'}
+    - data_bindings: []
+      layout_properties: {grid_position: 'YGHZTA,VNVWSK'}
       name: label_1
-      properties: {align: center, role: headline, text: Unlock Property Insights Instantly}
+      properties: {align: center, font: Roboto Slab, font_size: 40, italic: false, role: headline, text: Unlock Property Insights Instantly}
       type: Label
     - layout_properties: {grid_position: 'QCGAFQ,ZNIKWG'}
       name: label_2
-      properties: {align: center, role: body, text: Interactive maps and smart filters to help real estate investors make data-driven decisions.}
+      properties: {align: center, font: Roboto Slab, font_size: 18, role: body, text: Interactive maps and smart filters to help real estate investors make data-driven decisions.}
       type: Label
     - layout_properties: {grid_position: 'MZJKLB,VPKFXL'}
       name: spacer_1
@@ -16,7 +17,7 @@ components_by_slot:
     - event_bindings: {click: explore_dashboard_button_click}
       layout_properties: {grid_position: 'ZIDYGH,MMARWS'}
       name: explore_dashboard_button
-      properties: {align: center, role: tonal-button, text: Explore the Dashboard}
+      properties: {align: center, background: 'theme:Primary', foreground: 'theme:On Secondary', role: elevated-button, spacing_above: medium, spacing_below: large, text: Explore the Dashboard}
       type: Button
     - layout_properties: {grid_position: 'PZIDQQ,MNQENM'}
       name: spacer_2
@@ -25,39 +26,51 @@ components_by_slot:
     - components:
       - layout_properties: {grid_position: 'BBUYOF,GSWEBT'}
         name: label_3
-        properties: {text: 📍 Visualize Properties on a Map}
+        properties: {font: Roboto Slab, text: 📍 Visualize Properties on a Map}
         type: Label
       - layout_properties: {grid_position: 'DJENUE,VUVECG'}
         name: label_4
-        properties: {role: body, text: Find specific property types quickly}
+        properties: {font: Roboto Slab, role: body, text: Find specific property types quickly}
         type: Label
-      layout_properties: {grid_position: 'DACMOZ,OJSUQT'}
+      - layout_properties: {grid_position: 'VGBIEO,GACEIH'}
+        name: image_1
+        properties: {source: _/theme/undraw_location-tracking_q3yd.svg}
+        type: Image
+      layout_properties: {grid_position: 'PDTDPZ,VGNKLM'}
       name: outlined_card_1
       properties: {role: elevated-card}
       type: ColumnPanel
     - components:
       - layout_properties: {grid_position: 'EFINMQ,MPZRJE'}
         name: label_5
-        properties: {text: 📊 Export Custom Datasets}
+        properties: {font: Roboto Slab, text: 📊 Export Custom Datasets}
         type: Label
       - layout_properties: {grid_position: 'NQJVLL,KZJWQU'}
         name: label_6
-        properties: {role: body, text: Instantly view curated datasets}
+        properties: {font: Roboto Slab, role: body, text: Instantly view curated datasets}
         type: Label
-      layout_properties: {grid_position: 'DACMOZ,XPWHUX'}
+      - layout_properties: {grid_position: 'FFTTDA,GBCFLC'}
+        name: image_2
+        properties: {source: _/theme/undraw_data-analysis_b7cp.svg}
+        type: Image
+      layout_properties: {grid_position: 'PDTDPZ,VDGUWC'}
       name: outlined_card_2
       properties: {role: elevated-card}
       type: ColumnPanel
     - components:
       - layout_properties: {grid_position: 'FEQNVA,CTTMNO'}
         name: label_7
-        properties: {text: 🔍 Analyze Investment Potential}
+        properties: {font: Roboto Slab, text: 🔍 Analyze Investment Potential}
         type: Label
       - layout_properties: {grid_position: 'MZMFOJ,BGHEHQ'}
         name: label_8
-        properties: {role: body, text: Get the real estate insights you need}
+        properties: {font: Roboto Slab, role: body, text: Get the real estate insights you need}
         type: Label
-      layout_properties: {grid_position: 'DACMOZ,SOFPCM'}
+      - layout_properties: {grid_position: 'CNBMFJ,FOWOJX'}
+        name: image_3
+        properties: {source: _/theme/undraw_web-app_141a.svg}
+        type: Image
+      layout_properties: {grid_position: 'PDTDPZ,LIWZZW'}
       name: outlined_card_3
       properties: {role: elevated-card}
       type: ColumnPanel
@@ -68,7 +81,7 @@ components_by_slot:
     - components:
       - layout_properties: {grid_position: 'HRMYWO,RLQMIG'}
         name: label_9
-        properties: {align: center, role: title, text: 'Prop Insights is designed for real estate professionals who want to go beyond spreadsheets. Built by data scientists, our platform makes it easy to visualize and extract insights'}
+        properties: {align: center, font: Roboto Slab, role: title, text: 'Prop Insights is designed for real estate professionals who want to go beyond spreadsheets. Built by data scientists, our platform makes it easy to visualize and extract insights'}
         type: Label
       layout_properties: {grid_position: 'UYTVTZ,ECOARQ'}
       name: outlined_card_4

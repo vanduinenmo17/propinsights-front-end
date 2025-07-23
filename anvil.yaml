@@ -41,7 +41,11 @@ dependencies:
   version: {version_tag: v3.1.0}
 metadata: {logo_img: 'asset:ChatGPT Image May 19, 2025, 04_32_26 PM.png', title: PropInsights}
 name: PropInsights
-native_deps: null
+native_deps:
+  head_html: |-
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Slab:wght@100..900&display=swap" rel="stylesheet">
 package_name: PropInsights
 renamed: true
 runtime_options:
