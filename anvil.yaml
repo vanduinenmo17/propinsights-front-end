@@ -61,9 +61,12 @@ services:
 - client_config: {}
   server_config: {}
   source: /runtime/services/anvil/secrets.yml
-- client_config: {allow_remember_me: true, allow_signup: true, confirm_email: true, enable_automatically: true, remember_me_days: 30, require_secure_passwords: true, use_email: true, use_google: false}
+- client_config: {allow_remember_me: true, allow_signup: true, confirm_email: true, enable_automatically: true, remember_me_days: 30, require_secure_passwords: true, use_email: true, use_google: true}
   server_config: {user_table: users}
   source: /runtime/services/anvil/users.yml
-startup: {module: DataDashboard, type: form}
+- client_config: {}
+  server_config: {}
+  source: /runtime/services/google.yml
+startup: {module: LandingPage, type: form}
 startup_form: null
 uplink_visible: true
