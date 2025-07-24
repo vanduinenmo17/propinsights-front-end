@@ -18,12 +18,6 @@ def get_property_data(query: str):
   df = pd.DataFrame.from_dict(df)
   return df
 
-# @anvil.server.callable
-# def get_map_data(query: str):
-#   df = get_property_data(query)
-#   map_data = go.Scattermapbox(lat=df['LAT'], lon=df['LON'], mode='markers', text=df['Address'], hoverinfo='text', customdata=df[['Address']])
-#   return map_data
-
 @anvil.server.callable
 def get_map_data(query: str):
   df = get_property_data(query)
@@ -34,7 +28,7 @@ def get_map_data(query: str):
     for _, row in df.iterrows()
   }
 
-  # Build full Plotly figure
+  # Build full Plotly Mapbox Map figure
   trace = go.Scattermapbox(
     lat=df['LAT'],
     lon=df['LON'],

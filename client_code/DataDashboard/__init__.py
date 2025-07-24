@@ -27,13 +27,15 @@ class DataDashboard(DataDashboardTemplate):
     self.city_select.items = utils.get_city_dict()
     
     # ---- Mapbox Map ----
-    # Call and unpack result
-    map_result = anvil.server.call('get_map_data', query)
-    # Assign full figure to the Plot component
-    self.mapbox_map.figure = map_result['figure']
-    # Save lookup dictionary
-    self.latlon_to_address = map_result['lookup']
-    self.mapbox_map.config = {'scrollZoom': True}
+    # # Call and unpack result
+    # map_result = anvil.server.call('get_map_data', query)
+    # # Assign full figure to the Plot component
+    # self.mapbox_map.figure = map_result['figure']
+    # # Save lookup dictionary
+    # self.latlon_to_address = map_result['lookup']
+    # self.mapbox_map.config = {'scrollZoom': True}
+    
+    self.mapbox_map.figure, self.latlon_to_address, self.mapbox_map.config = utils.get_map_data(query)
     
     # ---- Tabulator Data Table ----
     self.tabulator.data = anvil.server.call('get_table_data', query)
@@ -73,8 +75,7 @@ class DataDashboard(DataDashboardTemplate):
         city_where_query = f'AND City {utils.list_to_in_phrase(self.city_select.selected)}'
       ## Construct full query
       query = query + county_where_query + city_where_query
-      print(query)
-      self.mapbox_map.data = anvil.server.call('get_map_data', query)
+      self.mapbox_map.figure, self.latlon_to_address, self.mapbox_map.config = utils.get_map_data(query)
       self.tabulator.data = anvil.server.call('get_table_data', query)
 
   def filter_button_click(self, **event_args):

@@ -52,3 +52,13 @@ def get_city_dict():
     {"key": "Lochbuie", "value": "LOCHBUIE"},
   ]
   return dict
+
+  def get_map_data(query: str):
+    # Call and unpack result
+    map_result = anvil.server.call('get_map_data', query)
+    # Assign full figure to the Plot component
+    figure = map_result['figure']
+    # Save lookup dictionary
+    latlon_to_address = map_result['lookup']
+    config = {'scrollZoom': True}
+    return figure, latlon_to_address, config
