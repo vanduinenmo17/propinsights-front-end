@@ -5,7 +5,7 @@ components_by_slot:
       - data_bindings: []
         layout_properties: {grid_position: 'OEZTKS,MDVPPF'}
         name: label_1
-        properties: {align: left, bold: true, font: Questrial, foreground: 'theme:On Primary', italic: false, role: headline, text: Prop Insights, underline: false}
+        properties: {align: left, bold: true, font: Questrial, foreground: 'theme:On Primary', italic: false, role: headline, spacing_above: large, text: PropInsights, underline: false}
         type: Label
       - layout_properties: {grid_position: 'ADUEEZ,MEBJYX'}
         name: label_2
@@ -31,7 +31,7 @@ components_by_slot:
         type: Spacer
       - layout_properties: {full_width_row: false, grid_position: 'FVHLZN,LRJJOG'}
         name: image_1
-        properties: {display_mode: shrink_to_fit, horizontal_align: left, source: _/theme/undraw_map-dark.svg, vertical_align: bottom}
+        properties: {display_mode: shrink_to_fit, horizontal_align: left, source: _/theme/undraw_map-dark.svg, spacing_above: large, vertical_align: bottom}
         type: Image
       layout_properties: {grid_position: 'AUUKUN,MRAPXE'}
       name: hero_subpanel_2
@@ -45,7 +45,7 @@ components_by_slot:
     - components:
       - layout_properties: {grid_position: 'MMZGYU,GQDLFT'}
         name: label_4
-        properties: {font: Questrial, role: headline, text: Datasets to drive investment decisions.}
+        properties: {bold: true, font: Questrial, foreground: 'theme:On Surface', role: headline, text: Datasets to drive investment decisions.}
         type: Label
       layout_properties: {grid_position: 'QSMEMJ,LZDRLB QHEBIQ,ZVRBXQ'}
       name: hero_subpanel_3
@@ -53,15 +53,40 @@ components_by_slot:
       type: ColumnPanel
     - layout_properties: {grid_position: 'QSMEMJ,LZDRLB WKWQEZ,BNERAH'}
       name: label_5
-      properties: {text: PropInsights}
+      properties: {font: Questrial, font_size: 16, foreground: 'theme:On Surface', text: 'PropInsights gennerates curated property lists, predictive models, and market insights in seconds—no data prep or tracking required.'}
+      type: Label
+    - layout_properties: {grid_position: 'QSMEMJ,LZDRLB SUQJEV,MQLWXW'}
+      name: label_6
+      properties: {align: left, font: Questrial, font_size: 16, foreground: 'theme:On Surface', icon: '', text: '📋 Pull out of the box property lists like Absentee Owners, Out of State Owners, and Divisible Parcels '}
+      type: Label
+    - layout_properties: {grid_position: 'QSMEMJ,LZDRLB KUROBR,LMQZHZ'}
+      name: label_7
+      properties: {font: Questrial, font_size: 16, text: 🔎 Filter data with the criteria you need}
+      type: Label
+    - layout_properties: {grid_position: 'QSMEMJ,LZDRLB MMNOJE,GGUFBM'}
+      name: label_8
+      properties: {font: Questrial, font_size: 16, text: 📥 Download data in the format you prefer}
       type: Label
     - layout_properties: {grid_position: 'QSMEMJ,CYDNFJ'}
       name: hero_subpanel_4
       properties: {}
       type: ColumnPanel
+    - layout_properties: {grid_position: 'TBUYTB,TEQYNJ'}
+      name: image_2
+      properties: {horizontal_align: left, source: _/theme/undraw_algorithm-execution.svg, spacing_above: large}
+      type: Image
     layout_properties: {}
     name: hero_panel_2
-    properties: {}
+    properties: {spacing_above: large}
+    type: ColumnPanel
+  - components:
+    - layout_properties: {grid_position: 'IBFNKW,XOZEPD'}
+      name: label_9
+      properties: {bold: true, font: Questrial, foreground: 'theme:On Surface', role: headline, spacing_above: large, text: Create an account for free and try it today.}
+      type: Label
+    layout_properties: {}
+    name: hero_panel_3
+    properties: {background: 'theme:Primary'}
     type: ColumnPanel
 is_package: true
 layout: {type: 'form:Homepage'}

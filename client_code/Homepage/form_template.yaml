@@ -45,7 +45,7 @@ components:
   type: ColumnPanel
 - layout_properties: {slot: title}
   name: label_1
-  properties: {font: Roboto Slab, icon: '', role: title, text: PropInsights}
+  properties: {bold: true, font: Questrial, icon: '', role: title, text: PropInsights}
   type: Label
 container:
   properties: {html: '@theme:standard-page.html'}
