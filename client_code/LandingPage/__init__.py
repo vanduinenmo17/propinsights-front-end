@@ -19,3 +19,9 @@ class LandingPage(LandingPageTemplate):
   def btn_explore_dashboard_click(self, **event_args):
     """This method is called when the button is clicked"""
     open_form('DataDashboard')
+
+  def btn_create_account_landingpage_click(self, **event_args):
+    """This method is called when the button is clicked"""
+    user = anvil.users.get_user()
+    if not user:
+      anvil.users.login_with_form()

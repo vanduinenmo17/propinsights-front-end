@@ -1,5 +1,22 @@
 components:
-- components: []
+- components:
+  - components:
+    - layout_properties: {}
+      name: footer_label_1
+      properties: {text: © 2025 PropInsights}
+      type: Label
+    - layout_properties: {}
+      name: footer_link_1
+      properties: {foreground: 'theme:On Surface', text: Terms & Conditions}
+      type: Link
+    - layout_properties: {}
+      name: footer_link_2
+      properties: {foreground: 'theme:On Surface', text: Privacy Policy}
+      type: Link
+    layout_properties: {grid_position: 'NCNXOK,RRXQUG'}
+    name: footer_panel
+    properties: {align: center, gap: medium, spacing_above: large}
+    type: FlowPanel
   layout_properties: {slot: default}
   name: content_panel
   properties: {col_widths: '{}'}
@@ -11,33 +28,33 @@ components:
   type: FlowPanel
 - components:
   - event_bindings: {click: landing_page_link_click}
-    layout_properties: {grid_position: 'PBQHTS,BSZZKJ'}
+    layout_properties: {grid_position: 'NPKUQF,RFJESC CNMFOF,AKBEVY PBQHTS,BSZZKJ'}
     name: landing_page_link
     properties: {icon: 'fa:home', text: Home}
     type: Link
   - event_bindings: {click: data_dashboard_link_click}
-    layout_properties: {grid_position: 'TYSWXF,RIRLCZ'}
+    layout_properties: {grid_position: 'NPKUQF,RFJESC CNMFOF,AKBEVY TYSWXF,RIRLCZ'}
     name: data_dashboard_link
     properties: {icon: 'fa:area-chart', role: null, text: Dashboard}
     type: Link
   - event_bindings: {click: about_us_link_click}
-    layout_properties: {grid_position: 'AKSICH,NSBLXU'}
+    layout_properties: {grid_position: 'NPKUQF,RFJESC CNMFOF,AKBEVY AKSICH,NSBLXU'}
     name: about_us_link
     properties: {icon: 'fa:reorder', text: About Us}
     type: Link
   - event_bindings: {click: contact_us_link_click}
-    layout_properties: {grid_position: 'XJKNGR,UAUCXX'}
+    layout_properties: {grid_position: 'NPKUQF,RFJESC CNMFOF,AKBEVY XJKNGR,UAUCXX'}
     name: contact_us_link
     properties: {icon: 'fa:address-card', text: Contact Us}
     type: Link
-  - layout_properties: {grid_position: 'MBGMKT,FKHUYR'}
+  - layout_properties: {grid_position: 'NPKUQF,RFJESC CNMFOF,AKBEVY MBGMKT,FKHUYR'}
     name: spacer_1
-    properties: {height: 550}
+    properties: {height: 567}
     type: Spacer
   - event_bindings: {click: button_1_click}
-    layout_properties: {grid_position: 'JZUVRV,DWEUJB'}
+    layout_properties: {grid_position: 'NPKUQF,RFJESC CNMFOF,AKBEVY JZUVRV,DWEUJB'}
     name: logout_button
-    properties: {role: filled-button, text: Log Out}
+    properties: {background: 'theme:Primary', foreground: 'theme:On Primary', role: elevated-button, text: Log Out}
     type: Button
   layout_properties: {slot: left-nav}
   name: column_panel_1
@@ -55,5 +72,5 @@ layout_metadata: {description: App's standard Homepage, title: Homepage}
 slots:
   main_slot:
     index: 0
-    set_layout_properties: {grid_position: 'APMQAT,SDXTJX'}
+    set_layout_properties: {grid_position: 'UUSJFP,XRIPKK'}
     target: {name: content_panel, type: container}
