@@ -16,6 +16,6 @@ class LandingPage(LandingPageTemplate):
 
     # Any code you write here will run before the form opens.
 
-  def explore_dashboard_button_click(self, **event_args):
+  def btn_explore_dashboard_click(self, **event_args):
     """This method is called when the button is clicked"""
     open_form('DataDashboard')

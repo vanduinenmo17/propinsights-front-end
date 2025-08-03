@@ -5,31 +5,59 @@ components_by_slot:
       - data_bindings: []
         layout_properties: {grid_position: 'OEZTKS,MDVPPF'}
         name: label_1
-        properties: {bold: true, font: Questrial, foreground: 'theme:On Primary', italic: false, role: headline, text: Prop Insights, underline: false}
+        properties: {align: left, bold: true, font: Questrial, foreground: 'theme:On Primary', italic: false, role: headline, text: Prop Insights, underline: false}
         type: Label
       - layout_properties: {grid_position: 'DFQAXL,JCFTNM'}
         name: label_2
-        properties: {bold: true, font: Questrial, foreground: 'theme:On Surface', role: title, text: Access Important Real Estate Data Instantly}
+        properties: {align: left, bold: true, font: Questrial, foreground: 'theme:On Surface', role: title, text: Access Real Estate Data Instantly}
         type: Label
       - layout_properties: {grid_position: 'ZUTJNT,HJNLFB'}
         name: label_3
-        properties: {font: Questrial, font_size: 16, foreground: 'theme:On Surface', text: 'Quick and easy access to property lists, models, and data empowers real estate investors to analyze markets and make decisions. '}
+        properties: {align: left, font: Questrial, font_size: 16, foreground: 'theme:On Surface', text: 'Quick and easy access to property lists, models, and data empowers real estate investors to analyze markets and make decisions. '}
         type: Label
-      - layout_properties: {grid_position: 'HWCMRS,XOZSMV'}
+      - event_bindings: {click: btn_explore_dashboard_click}
+        layout_properties: {grid_position: 'HWCMRS,XOZSMV'}
         name: btn_explore_dashboard
         properties: {align: left, background: 'theme:On Surface', foreground: 'theme:On Primary', role: filled-button, text: Explore the Dashboard}
         type: Button
       layout_properties: {grid_position: 'AUUKUN,PRVGXR'}
-      name: column_panel_2
+      name: hero_subpanel_1
       properties: {}
       type: ColumnPanel
-    - layout_properties: {grid_position: 'AUUKUN,MRAPXE'}
-      name: column_panel_3
+    - components:
+      - layout_properties: {grid_position: 'HJDMBV,TSFWXS'}
+        name: spacer_1
+        properties: {height: 39}
+        type: Spacer
+      - layout_properties: {full_width_row: false, grid_position: 'FVHLZN,LRJJOG'}
+        name: image_1
+        properties: {display_mode: shrink_to_fit, horizontal_align: left, source: _/theme/undraw_map-dark.svg, vertical_align: bottom}
+        type: Image
+      layout_properties: {grid_position: 'AUUKUN,MRAPXE'}
+      name: hero_subpanel_2
       properties: {}
       type: ColumnPanel
     layout_properties: {}
     name: hero_panel_1
     properties: {background: 'theme:Primary'}
+    type: ColumnPanel
+  - components:
+    - components:
+      - layout_properties: {grid_position: 'MMZGYU,GQDLFT'}
+        name: label_4
+        properties: {}
+        type: Label
+      layout_properties: {grid_position: 'QSMEMJ,LZDRLB'}
+      name: hero_subpanel_3
+      properties: {}
+      type: ColumnPanel
+    - layout_properties: {grid_position: 'QSMEMJ,CYDNFJ'}
+      name: hero_subpanel_4
+      properties: {}
+      type: ColumnPanel
+    layout_properties: {}
+    name: hero_panel_2
+    properties: {}
     type: ColumnPanel
 is_package: true
 layout: {type: 'form:Homepage'}
