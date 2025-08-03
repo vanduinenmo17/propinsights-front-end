@@ -1,22 +1,22 @@
 color_scheme:
   colors:
-  - {color: '#4c662b', name: Primary}
-  - {color: '#cdeda3', name: Primary Container}
+  - {color: '#4FA17F', name: Primary}
+  - {color: '#a8f2cf', name: Primary Container}
   - {color: '#ffffff', name: On Primary}
-  - {color: '#354e16', name: On Primary Container}
-  - {color: '#586249', name: Secondary}
-  - {color: '#dce7c8', name: Secondary Container}
+  - {color: '#005139', name: On Primary Container}
+  - {color: '#83958A', name: Secondary}
+  - {color: '#cfe9d9', name: Secondary Container}
   - {color: '#ffffff', name: On Secondary}
-  - {color: '#404a33', name: On Secondary Container}
-  - {color: '#386663', name: Tertiary}
-  - {color: '#bcece7', name: Tertiary Container}
+  - {color: '#354b41', name: On Secondary Container}
+  - {color: '#3e6374', name: Tertiary}
+  - {color: '#c1e8fc', name: Tertiary Container}
   - {color: '#ffffff', name: On Tertiary}
-  - {color: '#1f4e4b', name: On Tertiary Container}
+  - {color: '#254b5b', name: On Tertiary Container}
   - {color: '#ba1a1a', name: Error}
   - {color: '#f9faef', name: Background}
-  - {color: '#dadbd0', name: Surface}
+  - {color: '#f5fbf5', name: Surface}
   - {color: '#44483d', name: On Background}
-  - {color: '#1a1c16', name: On Surface}
+  - {color: '#171d1a', name: On Surface}
   - {color: '#f1f2e6', name: Surface Variant}
   - {color: '#44483d', name: On Surface Variant}
   - {color: '#75796c', name: Outline}
