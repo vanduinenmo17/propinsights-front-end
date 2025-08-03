@@ -7,7 +7,7 @@ components_by_slot:
         name: label_1
         properties: {align: left, bold: true, font: Questrial, foreground: 'theme:On Primary', italic: false, role: headline, text: Prop Insights, underline: false}
         type: Label
-      - layout_properties: {grid_position: 'DFQAXL,JCFTNM'}
+      - layout_properties: {grid_position: 'ADUEEZ,MEBJYX'}
         name: label_2
         properties: {align: left, bold: true, font: Questrial, foreground: 'theme:On Surface', role: title, text: Access Real Estate Data Instantly}
         type: Label
@@ -45,12 +45,16 @@ components_by_slot:
     - components:
       - layout_properties: {grid_position: 'MMZGYU,GQDLFT'}
         name: label_4
-        properties: {}
+        properties: {font: Questrial, role: headline, text: Datasets to drive investment decisions.}
         type: Label
-      layout_properties: {grid_position: 'QSMEMJ,LZDRLB'}
+      layout_properties: {grid_position: 'QSMEMJ,LZDRLB QHEBIQ,ZVRBXQ'}
       name: hero_subpanel_3
       properties: {}
       type: ColumnPanel
+    - layout_properties: {grid_position: 'QSMEMJ,LZDRLB WKWQEZ,BNERAH'}
+      name: label_5
+      properties: {text: PropInsights}
+      type: Label
     - layout_properties: {grid_position: 'QSMEMJ,CYDNFJ'}
       name: hero_subpanel_4
       properties: {}
