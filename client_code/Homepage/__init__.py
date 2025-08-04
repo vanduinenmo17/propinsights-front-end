@@ -8,12 +8,14 @@ from anvil.tables import app_tables
 import anvil.users
 import anvil.server
 
-
 class Homepage(HomepageTemplate):
   def __init__(self, **properties):
     # Set Form properties and Data Bindings.
     self.init_components(**properties)
 
+    if not anvil.users.get_user():
+      self.btn_login.visible()
+  
   def about_us_link_click(self, **event_args):
     """This method is called when the link is clicked"""
     open_form('AboutUs')
@@ -30,15 +32,16 @@ class Homepage(HomepageTemplate):
     self.contact_us_link.role = ''
     self.about_us_link.role = ''
 
-  def button_1_click(self, **event_args):
-    """This method is called when the button is clicked"""
-    user = anvil.users.get_user()
-    if user:
-      anvil.users.logout()
-      anvil.users.login_with_form()
-
   def landing_page_link_click(self, **event_args):
     """This method is called when the link is clicked"""
     open_form('LandingPage')
+
+  def btn_login_click(self, **event_args):
+    """This method is called when the button is clicked"""
+    user = anvil.users.get_user()
+    if not user:
+      anvil.users.login_with_form()
+    if user:
+      self.btn_login.visible = False
 
 
