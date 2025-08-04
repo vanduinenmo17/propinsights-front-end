@@ -1,5 +1,6 @@
 from ._anvil_designer import HomepageTemplate
 from anvil import *
+import m3.components as m3
 import anvil.google.auth, anvil.google.drive
 from anvil.google.drive import app_files
 import anvil.tables as tables
@@ -13,8 +14,7 @@ class Homepage(HomepageTemplate):
     # Set Form properties and Data Bindings.
     self.init_components(**properties)
 
-    if not anvil.users.get_user():
-      self.btn_login.visible()
+    self.btn_account_refresh()
   
   def about_us_link_click(self, **event_args):
     """This method is called when the link is clicked"""
@@ -36,12 +36,13 @@ class Homepage(HomepageTemplate):
     """This method is called when the link is clicked"""
     open_form('LandingPage')
 
-  def btn_login_click(self, **event_args):
-    """This method is called when the button is clicked"""
+  def btn_account_refresh(self):
     user = anvil.users.get_user()
-    if not user:
-      anvil.users.login_with_form()
     if user:
-      self.btn_login.visible = False
+      self.btn_account.text = user['email']
+      # adjust icon/avatar if using AvatarMenu
+    else:
+      self.btn_account.text = "Login"
+    self.btn_account.visible = True
 
 

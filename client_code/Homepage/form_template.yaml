@@ -22,14 +22,18 @@ components:
   properties: {col_widths: '{}'}
   type: ColumnPanel
 - components:
-  - event_bindings: {click: btn_login_click, hide: btn_login_hide}
-    layout_properties: {}
-    name: btn_login
-    properties: {background: 'theme:Primary', foreground: 'theme:On Primary', role: elevated-button, text: Login}
-    type: Button
-  - name: user_dropdown
-    properties: {}
-    type: DropDown
+  - layout_properties: {}
+    name: btn_account
+    properties:
+      appearance: elevated
+      button_background_color: theme:Primary
+      button_text_color: theme:On Surface
+      spacing:
+        margin: [0, null, null, null]
+        padding: [0, null, 0, null]
+      text: Account
+      visible: true
+    type: form:dep_kh96tq8oqpx0il:_Components.ButtonMenu
   layout_properties: {slot: nav-right}
   name: navbar_links
   properties: {align: left}
