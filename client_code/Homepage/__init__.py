@@ -36,23 +36,28 @@ class Homepage(HomepageTemplate):
     """This method is called when the link is clicked"""
     open_form('LandingPage')
 
-  def btn_account_refresh(self):
+  def refresh_account_ui(self):
     user = anvil.users.get_user()
+
     if user:
-      self.btn_account.text = user['email']
-      # adjust icon/avatar if using AvatarMenu
+      self.btn_account.text = user.get('email') or user.get('name')
+      # Build menu once
+      if not self.btn_account.menu_items:
+        self.btn_account.menu_items = [
+          m3.MenuItem(text="Account", leading_icon="settings",
+                      click=self.open_account),
+          m3.MenuItem(text="Log Out", leading_icon="logout",
+                      click=self.do_logout)
+        ]
     else:
       self.btn_account.text = "Login"
-    self.btn_account.visible = True
+      self.btn_account.menu_items = []    
 
   def btn_account_click(self, **event_args):
     """This method is called when the Button is clicked"""
+    # Not logged-in? Show the Users-service login form
     if self.btn_account.text == "Login":
       anvil.users.login_with_form()
-      self.btn_account_refresh()
-    else:
-      btn_account_menu_item_logout = m3.MenuItem(text="Log Out")
-      btn_account_menu_item_account = m3.MenuItem(text="Account")
-      self.btn_account.menu_items = [btn_account_menu_item_logout, btn_account_menu_item_account]
 
-
+    # Either way, bring the UI back in line
+    self.refresh_account_ui()
