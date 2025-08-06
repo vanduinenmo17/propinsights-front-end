@@ -22,10 +22,15 @@ components:
   properties: {col_widths: '{}'}
   type: ColumnPanel
 - components:
-  - event_bindings: {click: btn_account_click}
+  - event_bindings: {click: btn_login_click}
+    name: btn_login
+    properties: {align: right, appearance: elevated, background_color: 'theme:Primary', text: Log In, text_color: 'theme:On Surface'}
+    type: form:dep_kh96tq8oqpx0il:_Components.Button
+  - event_bindings: {}
     layout_properties: {}
     name: btn_account
     properties:
+      align: right
       appearance: elevated
       button_background_color: theme:Primary
       button_text_color: theme:On Surface
