@@ -25,4 +25,4 @@ class LandingPage(LandingPageTemplate):
     """This method is called when the button is clicked"""
     user = anvil.users.get_user()
     if not user:
-      anvil.users.login_with_form()
+      anvil.users.login_with_form(allow_cancel=True)
