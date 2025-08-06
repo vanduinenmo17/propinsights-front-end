@@ -13,40 +13,24 @@ from .. import utils
 
 class DataDashboard(DataDashboardTemplate):
   def __init__(self, **properties):
+    ## Check login status
+    user = anvil.users.get_user()
+    if user:
+      pass
+    else:
+      anvil.users.login_with_form()
     # Set Form properties and Data Bindings.
     self.init_components(**properties)
-    ## User Login Prompt
-    anvil.users.login_with_form()
-    ## Init query
-    query = """
-    SELECT LAT, LON, Address FROM `real-estate-data-processing.DataLists.AbsenteeOwners` LIMIT 100
-    """
+    ## Hide dashboard initially before user pulls any data
+    self.dashboard_panel.visible = False
 
     # ---- Dataset Selection Dropdowns ----
     self.dataset_select.items = utils.get_dataset_dict()
     self.county_select.items = utils.get_county_dict()
     self.city_select.items = utils.get_city_dict()
-    
-    # ---- Mapbox Map ----
-    # # Call and unpack result
-    # map_result = anvil.server.call('get_map_data', query)
-    # # Assign full figure to the Plot component
-    # self.mapbox_map.figure = map_result['figure']
-    # # Save lookup dictionary
-    # self.latlon_to_address = map_result['lookup']
-    # self.mapbox_map.config = {'scrollZoom': True}
-    
-    self.mapbox_map.figure, self.latlon_to_address, self.mapbox_map.config = utils.get_map_data(query)
-    
-    # ---- Tabulator Data Table ----
-    self.tabulator.data = anvil.server.call('get_table_data', query)
-    
-    keys_list = list(self.tabulator.data[0].keys())
-    
     self.data_select_panel.visible = True
 
     # ---- Tabulator Data Table Filter ----
-    self.fields_dropdown.items = keys_list
     self.type_dropdown.items = ['=','>','<','>=','<=','like','!=']
   
   def select_data_button_click(self, **event_args):
@@ -59,6 +43,7 @@ class DataDashboard(DataDashboardTemplate):
     if not self.dataset_select.selected:
       alert('Please select a dataset')
     else:
+      self.dashboard_panel.visible = True
       query = f"""
       SELECT LAT, LON, Address FROM `real-estate-data-processing.DataLists.{self.dataset_select.selected[0]}`
       """
@@ -78,6 +63,8 @@ class DataDashboard(DataDashboardTemplate):
       query = query + county_where_query + city_where_query
       self.mapbox_map.figure, self.latlon_to_address, self.mapbox_map.config = utils.get_map_data(query)
       self.tabulator.data = anvil.server.call('get_table_data', query)
+      keys_list = list(self.tabulator.data[0].keys())
+      self.fields_dropdown.items = keys_list
 
   def filter_button_click(self, **event_args):
     """This method is called when the button is clicked"""
