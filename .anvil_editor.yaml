@@ -2,13 +2,18 @@ unique_ids:
   assets:
     image (1).png: '1753303412963948774706830.9977'
     image.png: '1753298271705202956625087.57794'
+    landing_page_stock_image_1.png: '1754244438688297925876894.67554'
+    landing_page_stock_image_1_dark.png: '1754244839718554905850607.0243'
     standard-page.html: SERFB64JTU7KQI46ZZT3TOCSAHM232LX
     theme.css: 2R7GM7J3WTV3GDPPV376AGVHWOK5E5SO
+    undraw_algorithm-execution.svg: '1754250422980455258204494.8992'
     undraw_data-analysis_b7cp.svg: '1753296090838306004259004.82965'
     undraw_location-tracking_q3yd.svg: '1753296088276311140927906.29767'
+    undraw_map-dark.svg: '1754245983111586214127611.3896'
     undraw_web-app_141a.svg: '1753296016099463969122279.41235'
   forms:
     AboutUs: '1747113618821707300088438.7288'
+    AccountForm: '1754451162047811746654787.9989'
     ContactUs: '1747113764173653958909511.4415'
     DataDashboard: '1747115215672422218425807.2599'
     DataDashboard.RowTemplate1: '1747387462474857727363345.2961'

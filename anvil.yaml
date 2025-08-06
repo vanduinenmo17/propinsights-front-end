@@ -39,6 +39,9 @@ dependencies:
 - dep_id: dep_vdi8mw3mp30woi
   resolution_hints: {app_id: C6ZZPAPN4YYF5NVJ, name: Anvil Extras, package_name: anvil_extras}
   version: {version_tag: v3.1.0}
+- dep_id: dep_kh96tq8oqpx0il
+  resolution_hints: {app_id: 4UK6WHQ6UX7AKELK, name: Material 3 Theme, package_name: m3}
+  version: {version_tag: v1.2.6}
 metadata: {logo_img: 'asset:ChatGPT Image May 19, 2025, 04_32_26 PM.png', title: PropInsights}
 name: PropInsights
 native_deps:

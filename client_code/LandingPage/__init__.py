@@ -1,5 +1,6 @@
 from ._anvil_designer import LandingPageTemplate
 from anvil import *
+import m3.components as m3
 import anvil.google.auth, anvil.google.drive
 from anvil.google.drive import app_files
 import anvil.server
@@ -16,6 +17,12 @@ class LandingPage(LandingPageTemplate):
 
     # Any code you write here will run before the form opens.
 
-  def explore_dashboard_button_click(self, **event_args):
+  def btn_explore_dashboard_click(self, **event_args):
     """This method is called when the button is clicked"""
     open_form('DataDashboard')
+
+  def btn_create_account_landingpage_click(self, **event_args):
+    """This method is called when the button is clicked"""
+    user = anvil.users.get_user()
+    if not user:
+      anvil.users.login_with_form(allow_cancel=True)
