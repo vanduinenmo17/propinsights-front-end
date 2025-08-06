@@ -13,6 +13,7 @@ class Homepage(HomepageTemplate):
   def __init__(self, **properties):
     # Set Form properties and Data Bindings.
     self.init_components(**properties)
+    
     self.menu_item_account = m3.MenuItem(text="Account")
     self.menu_item_account.add_event_handler("click", self.open_account)
     self.menu_item_logout = m3.MenuItem(text="Log Out")
