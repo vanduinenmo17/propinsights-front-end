@@ -51,8 +51,8 @@ class Homepage(HomepageTemplate):
       anvil.users.login_with_form()
       self.btn_account_refresh()
     else:
-      btn_account_menu_item_logout = m3.MenuItem(text="Log Out", leading_icon="undo")
-      btn_account_menu_item_account = m3.MenuItem(text="Account", leading_icon="redo")
+      btn_account_menu_item_logout = m3.MenuItem(text="Log Out")
+      btn_account_menu_item_account = m3.MenuItem(text="Account")
       self.btn_account.menu_items = [btn_account_menu_item_logout, btn_account_menu_item_account]
 
 
