@@ -45,4 +45,14 @@ class Homepage(HomepageTemplate):
       self.btn_account.text = "Login"
     self.btn_account.visible = True
 
+  def btn_account_click(self, **event_args):
+    """This method is called when the Button is clicked"""
+    if self.btn_account.text == "Login":
+      anvil.users.login_with_form()
+      self.btn_account_refresh()
+    else:
+      btn_account_menu_item_logout = m3.MenuItem(text="Log Out", leading_icon="undo")
+      btn_account_menu_item_account = m3.MenuItem(text="Account", leading_icon="redo")
+      self.btn_account.menu_items = [btn_account_menu_item_logout, btn_account_menu_item_account]
+
 

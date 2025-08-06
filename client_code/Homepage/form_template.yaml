@@ -22,7 +22,8 @@ components:
   properties: {col_widths: '{}'}
   type: ColumnPanel
 - components:
-  - layout_properties: {}
+  - event_bindings: {click: btn_account_click}
+    layout_properties: {}
     name: btn_account
     properties:
       appearance: elevated
