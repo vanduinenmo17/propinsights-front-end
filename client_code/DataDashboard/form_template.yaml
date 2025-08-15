@@ -44,12 +44,12 @@ components_by_slot:
     name: data_select_panel
     properties: {col_widths: '{"BMUEPZ":10,"MDYGJG":20,"IOUDLI":30,"TEFNOA":60}', spacing_above: small, visible: true}
     type: ColumnPanel
+  - event_bindings: {click: mapbox_map_click}
+    layout_properties: {}
+    name: mapbox_map
+    properties: {}
+    type: Plot
   - components:
-    - event_bindings: {click: mapbox_map_click}
-      layout_properties: {grid_position: 'YMNDKM,UOJZQF'}
-      name: mapbox_map
-      properties: {}
-      type: Plot
     - components:
       - layout_properties: {}
         name: filter_label
