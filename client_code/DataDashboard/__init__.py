@@ -11,6 +11,7 @@ import anvil.server
 from tabulator.Tabulator import Tabulator
 from anvil import media
 from .. import utils
+from anvil.js.window import setTimeout
 
 class DataDashboard(DataDashboardTemplate):
   def __init__(self, **properties):
@@ -50,7 +51,7 @@ class DataDashboard(DataDashboardTemplate):
     if not self.dataset_select.selected:
       alert('Please select a dataset')
     else:
-      self.dashboard_panel.visible = True
+      
       ## Construct query
       query = f"""
       SELECT LAT, LON, Address FROM `real-estate-data-processing.DataLists.{self.dataset_select.selected[0]}`
@@ -69,11 +70,17 @@ class DataDashboard(DataDashboardTemplate):
         city_where_query = f'AND City {utils.list_to_in_phrase(self.city_select.selected)}'
       ## Construct full query
       query = query + county_where_query + city_where_query
-      # Defer plotting a tick so Mapbox can initialize
-      anvil.timers.set_timeout(0.1, lambda: self._draw_map(query))
-      self.tabulator.data = anvil.server.call('get_table_data', query)
-      keys_list = list(self.tabulator.data[0].keys())
-      self.fields_dropdown.items = keys_list
+      self.dashboard_panel.visible = True
+      def later():
+        fig, self.latlon_to_address, cfg = utils.get_map_data(query)
+        self.mapbox_map.config = cfg or {}
+        self.mapbox_map.figure = fig
+        # Load table after the figure to reduce contention
+        data = anvil.server.call('get_table_data', query)
+        self.tabulator.data = data
+        if data:
+          self.fields_dropdown.items = list(data[0].keys())
+      setTimeout(later, 100)
 
   def filter_button_click(self, **event_args):
     """This method is called when the button is clicked"""
@@ -128,7 +135,4 @@ class DataDashboard(DataDashboardTemplate):
     csv_media = anvil.server.call('export_csv', query)
     anvil.media.download(csv_media)
 
-  def _draw_map(self, query):
-    fig, self.latlon_to_address, cfg = utils.get_map_data(query)
-    self.mapbox_map.config = cfg
-    self.mapbox_map.figure = fig
+  

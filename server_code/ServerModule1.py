@@ -43,7 +43,8 @@ def get_map_data(query: str):
       accesstoken="pk.eyJ1IjoidmFuZHVpbmVubW8xNyIsImEiOiJjbTkzMmg4OTIwaHZjMmpvamR2OXN1YWp1In0.SGzbF3O6SdZqfDsAsSoiaw",
       center=dict(lat=39.747508, lon=-104.987833),
       zoom=8,
-      style="streets"
+      # style="streets"
+      style = "open-street-map"
     ),
     margin=dict(t=0, b=0, l=0, r=0)
   )
