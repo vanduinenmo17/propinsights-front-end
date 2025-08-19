@@ -23,7 +23,7 @@ class DataDashboard(DataDashboardTemplate):
     # Set Form properties and Data Bindings.
     self.init_components(**properties)
     ## Initialize Download Data Button
-    self.menu_item_download_csv = m3.MenuItem(text="Account")
+    self.menu_item_download_csv = m3.MenuItem(text="CSV")
     self.menu_item_download_csv.add_event_handler("click", self.download_csv)
     self.btn_download_data.menu_items = [
       self.menu_item_download_csv
@@ -69,7 +69,8 @@ class DataDashboard(DataDashboardTemplate):
         city_where_query = f'AND City {utils.list_to_in_phrase(self.city_select.selected)}'
       ## Construct full query
       query = query + county_where_query + city_where_query
-      self.mapbox_map.figure, self.latlon_to_address, self.mapbox_map.config = utils.get_map_data(query)
+      # Defer plotting a tick so Mapbox can initialize
+      anvil.timers.set_timeout(0.1, lambda: self._draw_map(query))
       self.tabulator.data = anvil.server.call('get_table_data', query)
       keys_list = list(self.tabulator.data[0].keys())
       self.fields_dropdown.items = keys_list
@@ -126,3 +127,8 @@ class DataDashboard(DataDashboardTemplate):
     query = query + county_where_query + city_where_query
     csv_media = anvil.server.call('export_csv', query)
     anvil.media.download(csv_media)
+
+  def _draw_map(self, query):
+    fig, self.latlon_to_address, cfg = utils.get_map_data(query)
+    self.mapbox_map.config = cfg
+    self.mapbox_map.figure = fig
