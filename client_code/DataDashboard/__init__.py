@@ -21,6 +21,12 @@ class DataDashboard(DataDashboardTemplate):
       anvil.users.login_with_form()
     # Set Form properties and Data Bindings.
     self.init_components(**properties)
+    ## Initialize Download Data Button
+    self.menu_item_download_csv = m3.MenuItem(text="Account")
+    self.menu_item_download_csv.add_event_handler("click", self.download_csv)
+    self.btn_download_data.menu_items = [
+      self.menu_item_download_csv
+    ]
     ## Hide dashboard initially before user pulls any data
     self.dashboard_panel.visible = False
 
@@ -44,6 +50,7 @@ class DataDashboard(DataDashboardTemplate):
       alert('Please select a dataset')
     else:
       self.dashboard_panel.visible = True
+      ## Construct query
       query = f"""
       SELECT LAT, LON, Address FROM `real-estate-data-processing.DataLists.{self.dataset_select.selected[0]}`
       """
@@ -96,3 +103,26 @@ class DataDashboard(DataDashboardTemplate):
       print(f"Clicked address: {address}")
 
       self.tabulator.set_filter('Address', '=', address)
+
+  def download_csv(self, **event_args):
+    ## Construct query
+    query = f"""
+      SELECT LAT, LON, Address FROM `real-estate-data-processing.DataLists.{self.dataset_select.selected[0]}`
+      """
+    ## County if statement
+    if not self.county_select.selected:
+      county_where_query = ''
+    else: 
+      county_where_query = f'WHERE County {utils.list_to_in_phrase(self.county_select.selected)}'
+      ## City if statement
+    if not self.city_select.selected:
+      city_where_query = ''
+    elif county_where_query == '':
+      city_where_query =  f'WHERE City {utils.list_to_in_phrase(self.city_select.selected)}'
+    else:
+      city_where_query = f'AND City {utils.list_to_in_phrase(self.city_select.selected)}'
+      ## Construct full query
+    query = query + county_where_query + city_where_query
+    items = anvil.server.call('get_table_data', query)
+    csv_str = items.to_csv()
+    anvil.media.download(csv_str)
