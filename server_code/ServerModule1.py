@@ -57,3 +57,11 @@ def get_table_data(query):
   df = get_property_data(query)
   records = df.to_dict(orient="records")
   return records
+
+@anvil.server.callable
+def export_csv(query):
+  import pandas as pd
+  df = get_property_data(query)
+  csv_text = df.to_csv(index=False)
+  blob = anvil.BlobMedia("text/csv", csv_text.encode("utf-8"), name="data.csv")
+  return blob

@@ -9,6 +9,7 @@ from anvil.tables import app_tables
 import anvil.users
 import anvil.server
 from tabulator.Tabulator import Tabulator
+from anvil import media
 from .. import utils
 
 class DataDashboard(DataDashboardTemplate):
@@ -123,6 +124,5 @@ class DataDashboard(DataDashboardTemplate):
       city_where_query = f'AND City {utils.list_to_in_phrase(self.city_select.selected)}'
       ## Construct full query
     query = query + county_where_query + city_where_query
-    items = anvil.server.call('get_table_data', query)
-    csv_str = items.to_csv()
-    anvil.media.download(csv_str)
+    csv_media = anvil.server.call('export_csv', query)
+    anvil.media.download(csv_media)
