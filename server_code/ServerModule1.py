@@ -43,7 +43,8 @@ def get_map_data(query: str):
       accesstoken="pk.eyJ1IjoidmFuZHVpbmVubW8xNyIsImEiOiJjbTkzMmg4OTIwaHZjMmpvamR2OXN1YWp1In0.SGzbF3O6SdZqfDsAsSoiaw",
       center=dict(lat=39.747508, lon=-104.987833),
       zoom=8,
-      style="streets"
+      # style="streets"
+      style = "open-street-map"
     ),
     margin=dict(t=0, b=0, l=0, r=0)
   )
@@ -57,3 +58,11 @@ def get_table_data(query):
   df = get_property_data(query)
   records = df.to_dict(orient="records")
   return records
+
+@anvil.server.callable
+def export_csv(query):
+  import pandas as pd
+  df = get_property_data(query)
+  csv_text = df.to_csv(index=False)
+  blob = anvil.BlobMedia("text/csv", csv_text.encode("utf-8"), name="data.csv")
+  return blob

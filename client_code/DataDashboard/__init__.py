@@ -9,44 +9,36 @@ from anvil.tables import app_tables
 import anvil.users
 import anvil.server
 from tabulator.Tabulator import Tabulator
+from anvil import media
 from .. import utils
+from anvil.js.window import setTimeout
 
 class DataDashboard(DataDashboardTemplate):
   def __init__(self, **properties):
+    ## Check login status
+    user = anvil.users.get_user()
+    if user:
+      pass
+    else:
+      anvil.users.login_with_form()
     # Set Form properties and Data Bindings.
     self.init_components(**properties)
-    ## User Login Prompt
-    anvil.users.login_with_form()
-    ## Init query
-    query = """
-    SELECT LAT, LON, Address FROM `real-estate-data-processing.DataLists.AbsenteeOwners` LIMIT 100
-    """
+    ## Initialize Download Data Button
+    self.menu_item_download_csv = m3.MenuItem(text="CSV")
+    self.menu_item_download_csv.add_event_handler("click", self.download_csv)
+    self.btn_download_data.menu_items = [
+      self.menu_item_download_csv
+    ]
+    ## Hide dashboard initially before user pulls any data
+    self.dashboard_panel.visible = False
 
     # ---- Dataset Selection Dropdowns ----
     self.dataset_select.items = utils.get_dataset_dict()
     self.county_select.items = utils.get_county_dict()
     self.city_select.items = utils.get_city_dict()
-    
-    # ---- Mapbox Map ----
-    # # Call and unpack result
-    # map_result = anvil.server.call('get_map_data', query)
-    # # Assign full figure to the Plot component
-    # self.mapbox_map.figure = map_result['figure']
-    # # Save lookup dictionary
-    # self.latlon_to_address = map_result['lookup']
-    # self.mapbox_map.config = {'scrollZoom': True}
-    
-    self.mapbox_map.figure, self.latlon_to_address, self.mapbox_map.config = utils.get_map_data(query)
-    
-    # ---- Tabulator Data Table ----
-    self.tabulator.data = anvil.server.call('get_table_data', query)
-    
-    keys_list = list(self.tabulator.data[0].keys())
-    
     self.data_select_panel.visible = True
 
     # ---- Tabulator Data Table Filter ----
-    self.fields_dropdown.items = keys_list
     self.type_dropdown.items = ['=','>','<','>=','<=','like','!=']
   
   def select_data_button_click(self, **event_args):
@@ -59,6 +51,8 @@ class DataDashboard(DataDashboardTemplate):
     if not self.dataset_select.selected:
       alert('Please select a dataset')
     else:
+      
+      ## Construct query
       query = f"""
       SELECT LAT, LON, Address FROM `real-estate-data-processing.DataLists.{self.dataset_select.selected[0]}`
       """
@@ -76,8 +70,17 @@ class DataDashboard(DataDashboardTemplate):
         city_where_query = f'AND City {utils.list_to_in_phrase(self.city_select.selected)}'
       ## Construct full query
       query = query + county_where_query + city_where_query
-      self.mapbox_map.figure, self.latlon_to_address, self.mapbox_map.config = utils.get_map_data(query)
-      self.tabulator.data = anvil.server.call('get_table_data', query)
+      self.dashboard_panel.visible = True
+      def later():
+        fig, self.latlon_to_address, cfg = utils.get_map_data(query)
+        self.mapbox_map.config = cfg or {}
+        self.mapbox_map.figure = fig
+        # Load table after the figure to reduce contention
+        data = anvil.server.call('get_table_data', query)
+        self.tabulator.data = data
+        if data:
+          self.fields_dropdown.items = list(data[0].keys())
+      setTimeout(later, 100)
 
   def filter_button_click(self, **event_args):
     """This method is called when the button is clicked"""
@@ -109,3 +112,27 @@ class DataDashboard(DataDashboardTemplate):
       print(f"Clicked address: {address}")
 
       self.tabulator.set_filter('Address', '=', address)
+
+  def download_csv(self, **event_args):
+    ## Construct query
+    query = f"""
+      SELECT LAT, LON, Address FROM `real-estate-data-processing.DataLists.{self.dataset_select.selected[0]}`
+      """
+    ## County if statement
+    if not self.county_select.selected:
+      county_where_query = ''
+    else: 
+      county_where_query = f'WHERE County {utils.list_to_in_phrase(self.county_select.selected)}'
+      ## City if statement
+    if not self.city_select.selected:
+      city_where_query = ''
+    elif county_where_query == '':
+      city_where_query =  f'WHERE City {utils.list_to_in_phrase(self.city_select.selected)}'
+    else:
+      city_where_query = f'AND City {utils.list_to_in_phrase(self.city_select.selected)}'
+      ## Construct full query
+    query = query + county_where_query + city_where_query
+    csv_media = anvil.server.call('export_csv', query)
+    anvil.media.download(csv_media)
+
+  
