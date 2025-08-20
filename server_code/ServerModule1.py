@@ -66,3 +66,11 @@ def export_csv(query):
   csv_text = df.to_csv(index=False)
   blob = anvil.BlobMedia("text/csv", csv_text.encode("utf-8"), name="data.csv")
   return blob
+
+@anvil.server.callable
+def export_excel(query):
+  import pandas as pd
+  df = get_property_data(query)
+  csv_text = df.to_excel(index=False)
+  blob = anvil.BlobMedia("text/csv", csv_text.encode("utf-8"), name="data.csv")
+  return blob
