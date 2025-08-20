@@ -6,6 +6,7 @@ from anvil.tables import app_tables
 import anvil.users
 import anvil.secrets
 import anvil.server
+import io
 import pandas as pd
 import plotly.graph_objects as go
 # This is a server module. It runs on the Anvil server,
@@ -61,7 +62,6 @@ def get_table_data(query):
 
 @anvil.server.callable
 def export_csv(query):
-  import pandas as pd
   df = get_property_data(query)
   csv_text = df.to_csv(index=False)
   blob = anvil.BlobMedia("text/csv", csv_text.encode("utf-8"), name="data.csv")
@@ -69,8 +69,9 @@ def export_csv(query):
 
 @anvil.server.callable
 def export_excel(query):
-  import pandas as pd
   df = get_property_data(query)
-  csv_text = df.to_excel(index=False)
-  blob = anvil.BlobMedia("text/csv", csv_text.encode("utf-8"), name="data.csv")
+  excel_buffer = io.BytesIO()
+  df.to_excel(excel_buffer, index=False, engine='xlsxwriter')
+  excel_buffer.seek(0)
+  blob = anvil.BlobMedia(content=excel_buffer.read(), content_type="application/vnd.ms-excel", name='data.xlsx')
   return blob
