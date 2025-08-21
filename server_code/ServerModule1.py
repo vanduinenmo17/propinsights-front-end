@@ -75,3 +75,12 @@ def export_excel(query):
   excel_buffer.seek(0)
   blob = anvil.BlobMedia(content=excel_buffer.read(), content_type="application/vnd.ms-excel", name='data.xlsx')
   return blob
+
+@anvil.server.callable
+def export_json(query):
+  df = get_property_data(query)
+  excel_buffer = io.BytesIO()
+  df.to_excel(excel_buffer, index=False, engine='xlsxwriter')
+  excel_buffer.seek(0)
+  blob = anvil.BlobMedia(content=excel_buffer.read(), content_type="application/vnd.ms-excel", name='data.xlsx')
+  return blob
