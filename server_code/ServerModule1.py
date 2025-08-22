@@ -79,8 +79,6 @@ def export_excel(query):
 @anvil.server.callable
 def export_json(query):
   df = get_property_data(query)
-  excel_buffer = io.BytesIO()
-  df.to_excel(excel_buffer, index=False, engine='xlsxwriter')
-  excel_buffer.seek(0)
-  blob = anvil.BlobMedia(content=excel_buffer.read(), content_type="application/vnd.ms-excel", name='data.xlsx')
+  json_string = df.to_json(orient='records', indent=2)
+  blob = anvil.BlobMedia('application/json', json_string.encode('utf-8'), name='data.json')
   return blob
