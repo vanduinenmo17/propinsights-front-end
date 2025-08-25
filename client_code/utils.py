@@ -53,7 +53,7 @@ def get_city_dict():
   ]
   return dict
 
-def build_query(dataset, county, city):
+def build_query(dataset: list, county: list, city: list):
   query = f"""
       SELECT LAT, LON, Address FROM `real-estate-data-processing.DataLists.{dataset[0]}`
       """
@@ -61,14 +61,14 @@ def build_query(dataset, county, city):
   if not city:
     county_where_query = ''
   else: 
-    county_where_query = f'WHERE County {list_to_in_phrase(self.county_select.selected)}'
+    county_where_query = f'WHERE County {list_to_in_phrase(county)}'
     ## City if statement
-    if not self.city_select.selected:
+    if not city:
       city_where_query = ''
     elif county_where_query == '':
-      city_where_query =  f'WHERE City {list_to_in_phrase(self.city_select.selected)}'
+      city_where_query =  f'WHERE City {list_to_in_phrase(city)}'
     else:
-      city_where_query = f'AND City {list_to_in_phrase(self.city_select.selected)}'
+      city_where_query = f'AND City {list_to_in_phrase(city)}'
       ## Construct full query
   query = query + county_where_query + city_where_query
   return query
