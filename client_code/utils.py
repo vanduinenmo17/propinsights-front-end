@@ -55,7 +55,7 @@ def get_city_dict():
 
 def build_query(dataset: list, county: list, city: list):
   query = f"""
-      SELECT LAT, LON, Address FROM `real-estate-data-processing.DataLists.{dataset[0]}`
+      SELECT * FROM `real-estate-data-processing.DataLists.{dataset[0]}`
       """
   ## County if statement
   if not city:

@@ -59,23 +59,7 @@ class DataDashboard(DataDashboardTemplate):
     else:
       
       ## Construct query
-      query = f"""
-      SELECT LAT, LON, Address FROM `real-estate-data-processing.DataLists.{self.dataset_select.selected[0]}`
-      """
-      ## County if statement
-      if not self.county_select.selected:
-        county_where_query = ''
-      else: 
-        county_where_query = f'WHERE County {utils.list_to_in_phrase(self.county_select.selected)}'
-      ## City if statement
-      if not self.city_select.selected:
-        city_where_query = ''
-      elif county_where_query == '':
-        city_where_query =  f'WHERE City {utils.list_to_in_phrase(self.city_select.selected)}'
-      else:
-        city_where_query = f'AND City {utils.list_to_in_phrase(self.city_select.selected)}'
-      ## Construct full query
-      query = query + county_where_query + city_where_query
+      query = utils.build_query(self.dataset_select.selected, self.county_select.selected, self.city_select.selected)
       self.dashboard_panel.visible = True
       def later():
         fig, self.latlon_to_address, cfg = utils.get_map_data(query)
@@ -121,23 +105,7 @@ class DataDashboard(DataDashboardTemplate):
 
   def download_csv(self, **event_args):
     ## Construct query
-    query = f"""
-      SELECT LAT, LON, Address FROM `real-estate-data-processing.DataLists.{self.dataset_select.selected[0]}`
-      """
-    ## County if statement
-    if not self.county_select.selected:
-      county_where_query = ''
-    else: 
-      county_where_query = f'WHERE County {utils.list_to_in_phrase(self.county_select.selected)}'
-      ## City if statement
-    if not self.city_select.selected:
-      city_where_query = ''
-    elif county_where_query == '':
-      city_where_query =  f'WHERE City {utils.list_to_in_phrase(self.city_select.selected)}'
-    else:
-      city_where_query = f'AND City {utils.list_to_in_phrase(self.city_select.selected)}'
-      ## Construct full query
-    query = query + county_where_query + city_where_query
+    query = utils.build_query(self.dataset_select.selected, self.county_select.selected, self.city_select.selected)
     csv_media = anvil.server.call('export_csv', query)
     anvil.media.download(csv_media)
 
@@ -148,23 +116,6 @@ class DataDashboard(DataDashboardTemplate):
     anvil.media.download(excel_media)
 
   def download_json(self, **event_args):
-    query = f"""
-      SELECT LAT, LON, Address FROM `real-estate-data-processing.DataLists.{self.dataset_select.selected[0]}`
-      """
-    ## County if statement
-    if not self.county_select.selected:
-      county_where_query = ''
-    else: 
-      county_where_query = f'WHERE County {utils.list_to_in_phrase(self.county_select.selected)}'
-      ## City if statement
-    if not self.city_select.selected:
-      city_where_query = ''
-    elif county_where_query == '':
-      city_where_query =  f'WHERE City {utils.list_to_in_phrase(self.city_select.selected)}'
-    else:
-      city_where_query = f'AND City {utils.list_to_in_phrase(self.city_select.selected)}'
-      ## Construct full query
-    query = query + county_where_query + city_where_query
+    query = utils.build_query(self.dataset_select.selected, self.county_select.selected, self.city_select.selected)
     json_media = anvil.server.call('export_json', query)
     anvil.media.download(json_media)
-  
