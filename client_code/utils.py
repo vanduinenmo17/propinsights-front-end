@@ -71,6 +71,7 @@ def build_query(dataset: list, county: list, city: list):
       city_where_query = f'AND City {list_to_in_phrase(city)}'
       ## Construct full query
   query = query + county_where_query + city_where_query
+  print(query)
   return query
 
 def get_map_data(query: str):

@@ -66,10 +66,16 @@ class DataDashboard(DataDashboardTemplate):
         self.mapbox_map.config = cfg or {}
         self.mapbox_map.figure = fig
         # Load table after the figure to reduce contention
+        # cols = [
+        #   {"title": "LAT", "field": "LAT", "minWidth": 90},
+        #   {"title": "LON", "field": "LON", "minWidth": 160}
+        #   # … other columns …
+        # ]
         self.tabulator.options = {
-          'layout': 'fitColumns',
+          'layout': 'fitData',
           "columnDefaults": {"resizable": True}
         }
+        # self.tabulator.columns = cols
         data = anvil.server.call('get_table_data', query)
         self.tabulator.data = data
         if data:
