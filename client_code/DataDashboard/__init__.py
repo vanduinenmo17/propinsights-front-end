@@ -35,6 +35,11 @@ class DataDashboard(DataDashboardTemplate):
       self.menu_item_download_excel,
       self.menu_item_download_json
     ]
+
+    self.tabulator.options = {
+      'layout': 'fitData',
+      "columnDefaults": {"resizable": True}
+    }
     ## Hide dashboard initially before user pulls any data
     self.dashboard_panel.visible = False
 
@@ -65,19 +70,11 @@ class DataDashboard(DataDashboardTemplate):
         fig, self.latlon_to_address, cfg = utils.get_map_data(query)
         self.mapbox_map.config = cfg or {}
         self.mapbox_map.figure = fig
-        # Load table after the figure to reduce contention
-        # cols = [
-        #   {"title": "LAT", "field": "LAT", "minWidth": 90},
-        #   {"title": "LON", "field": "LON", "minWidth": 160}
-        #   # … other columns …
-        # ]
-        self.tabulator.options = {
-          'layout': 'fitData',
-          "columnDefaults": {"resizable": True}
-        }
-        # self.tabulator.columns = cols
+        #Load table after the figure to reduce contention
         data = anvil.server.call('get_table_data', query)
+        self.tabulator.replace_data(data)
         self.tabulator.data = data
+        self.tabulator.redraw(True)
         if data:
           self.fields_dropdown.items = list(data[0].keys())
       setTimeout(later, 100)
