@@ -58,12 +58,10 @@ def get_map_data(query: str):
 @anvil.server.callable
 def get_table_data(query):
   df = get_property_data(query)
-  # Server: normalize to UTC, convert to Mountain Time, drop tz
-  s = pd.to_datetime(df['LastSalesDate'], errors='coerce', utc=True)
-  s = s.dt.tz_convert('America/Denver')       # convert timezone (keeps the moment in time)
-  df['LastSalesDate'] = s.dt.tz_localize(None)  # strip tz info to make them naive
-  df['LastSalesDate'] = df['LastSalesDate'].dt.floor('d')
   print(df['LastSalesDate'])
+  print(df.dtypes)
+  s = pd.to_datetime(df['LastSalesDate'], utc=True, errors='coerce')
+  df['LastSalesDate'] = s.dt.strftime('%Y-%m-%d')  # or '%Y-%m-%d'
   print(df.dtypes)
   records = df.to_dict(orient="records")
   return records

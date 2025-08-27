@@ -38,16 +38,19 @@ class DataDashboard(DataDashboardTemplate):
 
     ## Tabulator table options
     self.tabulator.options = {
+      "pagination": True,          
+      "paginationSize": 25,
+      "paginationSizeSelector": [10, 25, 50, 100, True],
       'layout': 'fitData',
-      "columnDefaults": {"resizable": True}
+      "height": "520px",
+      "columnDefaults": {"resizable": True},
     }
     self.cols = [
     {
       "title": "LastSalesDate",
       "field": "LastSalesDate",
-      "sorter": "datetime",
-      "formatter": "datetime",
-      "formatter_params": { "format": "%Y-%m-%d" }
+      "formatter": "luxon_datetime",
+      "formatter_params": { "inputFormat": "iso", "outputFormat": "yyyy-LL-dd" }
     }]
     self.tabulator.columns = self.cols
     ## Hide dashboard initially before user pulls any data
