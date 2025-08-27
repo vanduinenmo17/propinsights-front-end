@@ -36,10 +36,20 @@ class DataDashboard(DataDashboardTemplate):
       self.menu_item_download_json
     ]
 
+    ## Tabulator table options
     self.tabulator.options = {
       'layout': 'fitData',
       "columnDefaults": {"resizable": True}
     }
+    self.cols = [
+    {
+      "title": "LastSalesDate",
+      "field": "LastSalesDate",
+      "sorter": "datetime",
+      "formatter": "datetime",
+      "formatter_params": { "format": "%Y-%m-%d" }
+    }]
+    self.tabulator.columns = self.cols
     ## Hide dashboard initially before user pulls any data
     self.dashboard_panel.visible = False
 
