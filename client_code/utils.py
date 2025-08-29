@@ -12,6 +12,9 @@ from anvil.tables import app_tables
 #
 #    Module1.say_hello()
 #
+DATA_LIST_COLUMNS = ['Address','City','County','State','OwnerName','OwnerAddress','OwnerCity','OwnerState',
+                     'OwnerZip','BuildingDescription','SF','Bedrooms','Bathrooms','YearBuilt','AssessedValue',
+                     'LastSalesPrice','LastSalesDate','LAT','LON']
 
 def list_to_in_phrase(lst: list, with_quotes: bool = True) -> str:
   """
@@ -25,6 +28,19 @@ def list_to_in_phrase(lst: list, with_quotes: bool = True) -> str:
   else:
     quoted = [f"{p}" for p in lst]
   return f" IN ({', '.join(quoted)}) "
+
+def list_to_select_phrase(lst: list, with_quotes: bool = False) -> str:
+  """
+  Converts string list into a sql "SELECT ..." phrase
+  Args: lst (list): items to convert
+        with_quotes (bool, optional): whether to quote the items. Defaults to true
+  Returns: str: "SELECT ..." phrase
+  """
+  if with_quotes:
+    quoted = [f"'{p}'" for p in lst]
+  else:
+    quoted = [f"{p}" for p in lst]
+  return f" SELECT {', '.join(quoted)} "
 
 def get_dataset_dict():
   dict = [
@@ -55,7 +71,7 @@ def get_city_dict():
 
 def build_query(dataset: list, county: list, city: list):
   query = f"""
-      SELECT * FROM `real-estate-data-processing.DataLists.{dataset[0]}`
+      {list_to_select_phrase(DATA_LIST_COLUMNS)} FROM `real-estate-data-processing.DataLists.{dataset[0]}`
       """
   ## County if statement
   if not city:
