@@ -28,8 +28,6 @@ class Homepage(HomepageTemplate):
       self.menu_item_account,
       self.menu_item_logout
     ]
-    ## Refresh UI based on if user is logged in or not
-    self.refresh_account_ui()
   
   def about_us_link_click(self, **event_args):
     """This method is called when the link is clicked"""

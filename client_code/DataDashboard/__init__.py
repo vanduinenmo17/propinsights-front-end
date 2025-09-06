@@ -19,7 +19,7 @@ class DataDashboard(DataDashboardTemplate):
     # Set Form properties and Data Bindings.
     self.init_components(**properties)
     ## Refresh User Account/Login button every time page is opened
-    user_ui.refresh_layout_user_ui()
+    user_ui.init_header(self)
     ## Initialize Download Data Button
     self.menu_item_download_csv = m3.MenuItem(text="CSV")
     self.menu_item_download_csv.add_event_handler("click", self.download_csv)
