@@ -8,12 +8,16 @@ import anvil.tables.query as q
 from anvil.tables import app_tables
 import anvil.users
 import anvil.server
+from .. import user_ui
 
 class Homepage(HomepageTemplate):
   def __init__(self, **properties):
     ## Set Form properties and Data Bindings.
     self.init_components(**properties)
 
+    # Wire + paint the header on this page instance
+    user_ui.init_header(self)
+    
     ## Initialize account button
     self.menu_item_account = m3.MenuItem(text="Account")
     self.menu_item_account.add_event_handler("click", self.open_account)
@@ -47,31 +51,12 @@ class Homepage(HomepageTemplate):
     """This method is called when the link is clicked"""
     open_form('LandingPage')
 
-  def refresh_account_ui(self):
-    user = anvil.users.get_user()
-
-    if user:
-      self.btn_login.visible = False
-      self.btn_account.visible = True
-      self.btn_account.text = user['email']
-      # Build menu once
-      if not self.btn_account.menu_items:
-        self.btn_account.menu_items = [
-          self.menu_item_account,
-          self.menu_item_logout
-        ]
-    else:
-      self.btn_account.visible = False
-      self.btn_login.visible = True
-
   def open_account(self, **event_args):
-    open_form('AccountForm')        # or open a modal, etc.
+    open_form('AccountForm')
 
   def do_logout(self, **event_args):
-    anvil.users.logout()
-    self.refresh_account_ui()
+    user_ui.logout_and_refresh()
 
   def btn_login_click(self, **event_args):
     """This method is called when the component is clicked."""
-    anvil.users.login_with_form(allow_cancel=True)
-    self.refresh_account_ui()
+    user_ui.login_with_form_and_refresh(allow_cancel=True)
