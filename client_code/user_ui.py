@@ -28,16 +28,35 @@ def _ensure_header_bound(form):
 def _refresh_header_ui(form):
   """Show/hide Login vs Account and set the email label."""
   user = anvil.users.get_user()
-  is_logged_in = user is not None
-
+  
+  # If the open form has your layout's refresh method, prefer it:
+  if hasattr(form, "refresh_account_ui"):
+    form.refresh_account_ui()
+    return
+  
+    # Fallback: update the shared header components directly
+    is_logged_in = user is not None
+  
   if hasattr(form, "btn_login"):
     form.btn_login.visible = not is_logged_in
-
-  if hasattr(form, "btn_account"):
-    form.btn_account.visible = is_logged_in
-    if is_logged_in:
-      email = (user.get("email") if hasattr(user, "get") else getattr(user, "email", None)) or "Account"
-      form.btn_account.text = email
+  
+    if hasattr(form, "btn_account"):
+      form.btn_account.visible = is_logged_in
+      if is_logged_in:
+        # <- IMPORTANT: Users row must be indexed like a dict
+        email = None
+        try:
+          email = user['email']
+        except Exception:
+          # Extra fallbacks just in case your Users schema is different
+          if hasattr(user, 'get'):
+            try:
+              email = user.get('email')
+            except Exception:
+              pass
+          if not email:
+            email = getattr(user, 'email', None)
+        form.btn_account.text = email or "Account"
 
 def init_header(form=None):
   """Call this from any form's __init__ to wire + paint the header."""
