@@ -14,9 +14,6 @@ class Homepage(HomepageTemplate):
   def __init__(self, **properties):
     ## Set Form properties and Data Bindings.
     self.init_components(**properties)
-
-    # Wire + paint the header on this page instance
-    user_ui.init_header(self)
     
     ## Initialize account button
     self.menu_item_account = m3.MenuItem(text="Account")
@@ -28,6 +25,24 @@ class Homepage(HomepageTemplate):
       self.menu_item_account,
       self.menu_item_logout
     ]
+
+    # ⬅️ Tell the helper which instance is THE layout, then paint it
+    user_ui.register_layout(self)
+
+  def refresh_account_ui(self):
+    user = anvil.users.get_user()
+    logged_in = user is not None
+    self.btn_login.visible = not logged_in
+    self.btn_account.visible = logged_in
+    if logged_in:
+      # Users row is dict-like
+      email = None
+      try:
+        email = user["email"]
+      except Exception:
+        if hasattr(user, "get"):
+          email = user.get("email")
+      self.btn_account.text = email or "Account"
   
   def about_us_link_click(self, **event_args):
     """This method is called when the link is clicked"""
