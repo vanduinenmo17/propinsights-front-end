@@ -20,6 +20,7 @@ unique_ids:
     Homepage: H4JBZWZR3BK5CAIHHS3O6H4PJ3FF4UUS
     LandingPage: '1753248767399580538122181.8154'
   modules:
+    user_ui: '1757196495123890962059206.5714'
     utils: '1747717732583966631664388.309'
   scripts: {}
   server_modules:

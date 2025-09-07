@@ -9,6 +9,7 @@ import anvil.server
 import io
 import pandas as pd
 import plotly.graph_objects as go
+import datetime as dt
 # This is a server module. It runs on the Anvil server,
 # rather than in the user's browser.
 #
@@ -57,6 +58,11 @@ def get_map_data(query: str):
 @anvil.server.callable
 def get_table_data(query):
   df = get_property_data(query)
+  print(df['LastSalesDate'])
+  print(df.dtypes)
+  s = pd.to_datetime(df['LastSalesDate'], utc=True, errors='coerce')
+  df['LastSalesDate'] = s.dt.strftime('%Y-%m-%d')  # or '%Y-%m-%d'
+  print(df.dtypes)
   records = df.to_dict(orient="records")
   return records
 
