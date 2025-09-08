@@ -86,53 +86,59 @@ def export_json(query):
 # --- NEW: Background Task to do the heavy work off the 30s call path ---
 @anvil.server.background_task
 def bg_build_map_and_table(query: str):
-  # progress breadcrumb (optional)
-  anvil.server.task_state['stage'] = 'querying BigQuery via Uplink'
-
-  # Fetch via Uplink
-  df_records = anvil.server.call('get_bigquery_data', query)
-  df = pd.DataFrame.from_dict(df_records)
-
-  # Format dates (for Tabulator)
-  anvil.server.task_state['stage'] = 'formatting dataframe'
-  if 'LastSalesDate' in df.columns:
-    s = pd.to_datetime(df['LastSalesDate'], utc=True, errors='coerce')
-    df['LastSalesDate'] = s.dt.strftime('%Y-%m-%d')
-
-  # Build lookup
-  anvil.server.task_state['stage'] = 'building map'
-  lookup_dict = {}
-  if {'LAT','LON','Address'}.issubset(df.columns):
-    lookup_dict = {
-      f"{round(row['LAT'], 6)},{round(row['LON'], 6)}": row['Address']
-      for _, row in df.iterrows()
-    }
-
-  # Plotly Mapbox figure
-  trace = go.Scattermapbox(
-    lat=df['LAT'] if 'LAT' in df else [],
-    lon=df['LON'] if 'LON' in df else [],
-    mode='markers',
-    text=df['Address'] if 'Address' in df else [],
-    hoverinfo='text',
-    marker=dict(size=10),
-  )
-  layout = go.Layout(
-    mapbox=dict(
-      accesstoken="pk.eyJ1IjoidmFuZHVpbmVubW8xNyIsImEiOiJjbTkzMmg4OTIwaHZjMmpvamR2OXN1YWp1In0.SGzbF3O6SdZqfDsAsSoiaw",
-      center=dict(lat=39.747508, lon=-104.987833),
-      zoom=8,
-      style="open-street-map",
-    ),
-    margin=dict(t=0, b=0, l=0, r=0),
-  )
-  fig = go.Figure(data=[trace], layout=layout)
-
-  anvil.server.task_state['stage'] = 'serializing results'
-  records = df.to_dict(orient="records")
-
-  # Return a single bundle
-  return {"figure": fig, "lookup": lookup_dict, "records": records}
+  try:
+    # progress breadcrumb (optional)
+    anvil.server.task_state['stage'] = 'querying BigQuery via Uplink'
+  
+    # Fetch via Uplink
+    df_records = anvil.server.call('get_bigquery_data', query)
+    df = pd.DataFrame.from_dict(df_records)
+  
+    # Format dates (for Tabulator)
+    anvil.server.task_state['stage'] = 'formatting dataframe'
+    if 'LastSalesDate' in df.columns:
+      s = pd.to_datetime(df['LastSalesDate'], utc=True, errors='coerce')
+      df['LastSalesDate'] = s.dt.strftime('%Y-%m-%d')
+  
+    # Build lookup
+    anvil.server.task_state['stage'] = 'building map'
+    lookup_dict = {}
+    if {'LAT','LON','Address'}.issubset(df.columns):
+      lookup_dict = {
+        f"{round(row['LAT'], 6)},{round(row['LON'], 6)}": row['Address']
+        for _, row in df.iterrows()
+      }
+  
+    # Plotly Mapbox figure
+    trace = go.Scattermapbox(
+      lat=df['LAT'] if 'LAT' in df else [],
+      lon=df['LON'] if 'LON' in df else [],
+      mode='markers',
+      text=df['Address'] if 'Address' in df else [],
+      hoverinfo='text',
+      marker=dict(size=10),
+    )
+    layout = go.Layout(
+      mapbox=dict(
+        accesstoken="pk.eyJ1IjoidmFuZHVpbmVubW8xNyIsImEiOiJjbTkzMmg4OTIwaHZjMmpvamR2OXN1YWp1In0.SGzbF3O6SdZqfDsAsSoiaw",
+        center=dict(lat=39.747508, lon=-104.987833),
+        zoom=8,
+        style="open-street-map",
+      ),
+      margin=dict(t=0, b=0, l=0, r=0),
+    )
+    fig = go.Figure(data=[trace], layout=layout)
+  
+    anvil.server.task_state['stage'] = 'serializing results'
+    records = df.to_dict(orient="records")
+  
+    # Return a single bundle
+    return {"figure": fig, "lookup": lookup_dict, "records": records}
+    
+  except Exception as e:
+    # ensure the task reports 'failed' and client sees .get_error()
+    anvil.server.task_state['error'] = str(e)
+    raise
 
 # --- NEW: Server-callable that launches the background task (required) ---
 @anvil.server.callable

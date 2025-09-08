@@ -23,7 +23,7 @@ class DataDashboard(DataDashboardTemplate):
 
     self.task_timer = Timer(interval=0)
     self.task_timer.set_event_handler('tick', self.task_timer_tick)
-    self.add_component(self.task_timer)
+    self.dashboard_panel.add_component(self.task_timer)
     
     # Download menu setup
     self.menu_item_download_csv = m3.MenuItem(text="CSV")
@@ -105,48 +105,88 @@ class DataDashboard(DataDashboardTemplate):
     self.task_timer.interval = 1.0
 
   def task_timer_tick(self, **event_args):
-    # Require a Timer named `task_timer` on this form (Interval=1.0, Enabled=False)
     if not self._load_task:
       self.task_timer.interval = 0
       return
-
+  
+    # Use state or (if available in your runtime) termination status.
     state = self._load_task.get_state()  # 'running' | 'completed' | 'failed'
-
+  
     if state == 'running':
-      # Optional progress: if you later add a Label named progress_label, you can uncomment:
-      # prog = self._load_task.get_progress() or {}
-      # stage = prog.get('stage')
-      # if stage:
-      #   self.progress_label.text = f"Loading… {stage}"
+      # still working - keep polling
       return
-
-    # Stop polling
-    self.task_timer.interval = 0
-
+  
     if state == 'failed':
+      # stop polling and surface error
+      self.task_timer.interval = 0
       msg = self._load_task.get_error() or "Background task failed."
       alert(f"Data load failed:\n{msg}")
       self._load_task = None
       return
-
-    # Completed: get the result bundle and render
+  
+    # state == 'completed' (or anything that's not running/failed)
+    # It's possible get_return_value() is not ready yet; guard it
     result = self._load_task.get_return_value()
+    if result is None:
+      # Task reports completed but the value isn't materialized yet – keep polling
+      return
+  
+    # We have a real result: now stop polling
+    self.task_timer.interval = 0
     self._load_task = None
-
+  
     # Map
     self.latlon_to_address = result.get('lookup', {})
     self.mapbox_map.config = {'scrollZoom': True}
     self.mapbox_map.figure = result.get('figure')
-
+  
     # Table
     data = result.get('records', [])
     self.tabulator.replace_data(data)
     self.tabulator.data = data
     self.tabulator.redraw(True)
-
+  
     # Filter dropdown fields
     if data:
       self.fields_dropdown.items = list(data[0].keys())
+  
+      state = self._load_task.get_state()  # 'running' | 'completed' | 'failed'
+  
+      if state == 'running':
+        # Optional progress: if you later add a Label named progress_label, you can uncomment:
+        # prog = self._load_task.get_progress() or {}
+        # stage = prog.get('stage')
+        # if stage:
+        #   self.progress_label.text = f"Loading… {stage}"
+        return
+  
+      # Stop polling
+      self.task_timer.interval = 0
+  
+      if state == 'failed':
+        msg = self._load_task.get_error() or "Background task failed."
+        alert(f"Data load failed:\n{msg}")
+        self._load_task = None
+        return
+  
+      # Completed: get the result bundle and render
+      result = self._load_task.get_return_value()
+      self._load_task = None
+  
+      # Map
+      self.latlon_to_address = result.get('lookup', {})
+      self.mapbox_map.config = {'scrollZoom': True}
+      self.mapbox_map.figure = result.get('figure')
+  
+      # Table
+      data = result.get('records', [])
+      self.tabulator.replace_data(data)
+      self.tabulator.data = data
+      self.tabulator.redraw(True)
+  
+      # Filter dropdown fields
+      if data:
+        self.fields_dropdown.items = list(data[0].keys())
 
   def filter_button_click(self, **event_args):
     field = self.fields_dropdown.selected_value
