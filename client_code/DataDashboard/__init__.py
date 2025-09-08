@@ -12,15 +12,20 @@ from tabulator.Tabulator import Tabulator
 from anvil import media
 from .. import utils
 from .. import user_ui
-from anvil.js.window import setTimeout
+# NOTE: removed setTimeout; not used with background tasks
 
 class DataDashboard(DataDashboardTemplate):
   def __init__(self, **properties):
-    # Set Form properties and Data Bindings.
     self.init_components(**properties)
-    ## Refresh User Account/Login button every time page is opened
+
+    # Refresh User Account/Login button every time page is opened
     user_ui.init_header(self)
-    ## Initialize Download Data Button
+
+    self.task_timer = Timer(interval=0)
+    self.task_timer.set_event_handler('tick', self.task_timer_tick)
+    self.add_component(self.task_timer)
+    
+    # Download menu setup
     self.menu_item_download_csv = m3.MenuItem(text="CSV")
     self.menu_item_download_csv.add_event_handler("click", self.download_csv)
     self.menu_item_download_excel = m3.MenuItem(text="XLSX")
@@ -33,201 +38,170 @@ class DataDashboard(DataDashboardTemplate):
       self.menu_item_download_json
     ]
 
-    ## Tabulator table options
+    # Tabulator options
     self.tabulator.options = {
-      "pagination": True,          
+      "pagination": True,
       "paginationSize": 25,
       "paginationSizeSelector": [10, 25, 50, 100, True],
-      'layout': 'fitData',
+      "layout": "fitData",
       "height": "520px",
       "columnDefaults": {"resizable": True},
     }
     self.cols = [
-    {
-      "title": "LastSalesDate",
-      "field": "LastSalesDate",
-      "formatter": "luxon_datetime",
-      "formatter_params": { "inputFormat": "iso", "outputFormat": "yyyy-LL-dd" }
-    }]
+      {
+        "title": "LastSalesDate",
+        "field": "LastSalesDate",
+        "formatter": "luxon_datetime",
+        "formatter_params": {"inputFormat": "iso", "outputFormat": "yyyy-LL-dd"}
+      }
+    ]
     self.tabulator.columns = self.cols
-    ## Hide dashboard initially before user pulls any data
+
+    # Hidden until user pulls data
     self.dashboard_panel.visible = False
 
-    # ---- Dataset Selection Dropdowns ----
+    # Dataset selection
     self.dataset_select.items = utils.get_dataset_dict()
     self.county_select.items = utils.get_county_dict()
     self.city_select.items = utils.get_city_dict()
     self.data_select_panel.visible = True
 
-    # ---- Tabulator Data Table Filter ----
+    # Table filter dropdown
     self.type_dropdown.items = ['=','>','<','>=','<=','like','!=']
 
-    self._load_task = None  # holds the background Task object while running
-  
+    # Holds the running background Task object
+    self._load_task = None
+
   def select_data_button_click(self, **event_args):
-    """This method is called when the button is clicked"""
-    # Flip visibility
     self.data_select_panel.visible = not self.data_select_panel.visible
 
   def pull_data_button_click(self, **event_args):
-    # Ensure user is logged in (kept from your code)
+    # Ensure user is logged in
     user = anvil.users.get_user()
     if not user:
       user = user_ui.login_with_form_and_refresh(allow_cancel=True)
       if not user:
         return
-  
+
     if not self.dataset_select.selected:
-      alert('Please select a dataset')
-      return
+      alert('Please select a dataset'); return
     if not self.county_select.selected:
-      alert('Please select a county')
-      return
-  
-    query = utils.build_query(self.dataset_select.selected,
-                              self.county_select.selected,
-                              self.city_select.selected)
-  
+      alert('Please select a county'); return
+
+    query = utils.build_query(
+      self.dataset_select.selected,
+      self.county_select.selected,
+      self.city_select.selected
+    )
+
     # Show the dashboard shell immediately
     self.dashboard_panel.visible = True
-  
-    # Launch the background task directly from the client
-    # (returns immediately with a Task handle)
-    # self.progress_label.text = "Starting…"
-    self._load_task = anvil.server.launch_background_task('bg_build_map_and_table', query)
-  
-    # Start polling the task every 1 second
-    self.task_timer.enabled = True
+
+    # -- IMPORTANT --
+    # Launch the background task from a *server callable* and
+    # get a task_id back. Then get a Task handle on the client.
+    self._load_task = anvil.server.call('start_long_load', query)
+    # Start polling once per second
+    self.task_timer.interval = 1.0
 
   def task_timer_tick(self, **event_args):
-  # Nothing to do if no task
+    # Require a Timer named `task_timer` on this form (Interval=1.0, Enabled=False)
     if not self._load_task:
-      self.task_timer.enabled = False
+      self.task_timer.interval = 0
       return
-  
+
     state = self._load_task.get_state()  # 'running' | 'completed' | 'failed'
-  
+
     if state == 'running':
-      # Optional progress: get whatever the task set in task_state
-      prog = self._load_task.get_progress() or {}
-      stage = prog.get('stage')
-      if stage:
-        self.progress_label.text = f"Loading… {stage}"
+      # Optional progress: if you later add a Label named progress_label, you can uncomment:
+      # prog = self._load_task.get_progress() or {}
+      # stage = prog.get('stage')
+      # if stage:
+      #   self.progress_label.text = f"Loading… {stage}"
       return
-  
+
     # Stop polling
-    self.task_timer.enabled = False
-  
+    self.task_timer.interval = 0
+
     if state == 'failed':
-      # Surface the server-side exception message
       msg = self._load_task.get_error() or "Background task failed."
-      # self.progress_label.text = "Error"
       alert(f"Data load failed:\n{msg}")
       self._load_task = None
       return
-  
-    # Completed: pull the result bundle and render
+
+    # Completed: get the result bundle and render
     result = self._load_task.get_return_value()
     self._load_task = None
-  
+
     # Map
     self.latlon_to_address = result.get('lookup', {})
     self.mapbox_map.config = {'scrollZoom': True}
     self.mapbox_map.figure = result.get('figure')
-  
+
     # Table
     data = result.get('records', [])
     self.tabulator.replace_data(data)
     self.tabulator.data = data
     self.tabulator.redraw(True)
-  
-    # Populate filter fields dropdown
+
+    # Filter dropdown fields
     if data:
       self.fields_dropdown.items = list(data[0].keys())
-  
-    # self.progress_label.text = "Done"
 
   def filter_button_click(self, **event_args):
-    """This method is called when the button is clicked"""
     field = self.fields_dropdown.selected_value
     symbol = self.type_dropdown.selected_value
     value = self.value_box.text
-    # print(field, symbol, value)
-
     self.tabulator.set_filter(field, symbol, value)
-    pass
 
   def reset_filter_button_click(self, **event_args):
-    """This method is called when the button is clicked"""
     self.tabulator.clear_filter()
     self.value_box.text = ""
 
   def mapbox_map_click(self, points, **event_args):
-    """This method is called when a data point is clicked on the map."""
     if points:
       clicked_point = points[0]
-
-      # Get lat/lon and round to 6 decimals for consistency with lookup keys
       lat = round(clicked_point['lat'], 6)
       lon = round(clicked_point['lon'], 6)
       key = f"{lat},{lon}"
-
-      # Look up the address from the prebuilt dictionary
       address = self.latlon_to_address.get(key, "Unknown address")
-      print(f"Clicked address: {address}")
-
       self.tabulator.set_filter('Address', '=', address)
 
   def download_csv(self, **event_args):
-    ## Check login status and only download data if user is logged in
     user = anvil.users.get_user()
     if not user:
       user = user_ui.login_with_form_and_refresh(allow_cancel=True)
-      if not user:
-        return
-    # From here on, user is logged in — proceed as usual
+      if not user: return
     if not self.dataset_select.selected:
-      alert('Please select a dataset')
-      return
+      alert('Please select a dataset'); return
     if not self.county_select.selected:
-      alert('Please select a county')
-      return
+      alert('Please select a county'); return
     query = utils.build_query(self.dataset_select.selected, self.county_select.selected, self.city_select.selected)
     csv_media = anvil.server.call('export_csv', query)
     anvil.media.download(csv_media)
 
   def download_excel(self, **event_args):
-    ## Check login status and only download data if user is logged in
     user = anvil.users.get_user()
     if not user:
       user = user_ui.login_with_form_and_refresh(allow_cancel=True)
-      if not user:
-        return
-    # From here on, user is logged in — proceed as usual
+      if not user: return
     if not self.dataset_select.selected:
-      alert('Please select a dataset')
-      return
+      alert('Please select a dataset'); return
     if not self.county_select.selected:
-      alert('Please select a county')
-      return
+      alert('Please select a county'); return
     query = utils.build_query(self.dataset_select.selected, self.county_select.selected, self.city_select.selected)
     excel_media = anvil.server.call('export_excel', query)
     anvil.media.download(excel_media)
 
   def download_json(self, **event_args):
-    ## Check login status and only download data if user is logged in
     user = anvil.users.get_user()
     if not user:
       user = user_ui.login_with_form_and_refresh(allow_cancel=True)
-      if not user:
-        return
-    # From here on, user is logged in — proceed as usual
+      if not user: return
     if not self.dataset_select.selected:
-      alert('Please select a dataset')
-      return
+      alert('Please select a dataset'); return
     if not self.county_select.selected:
-      alert('Please select a county')
-      return
+      alert('Please select a county'); return
     query = utils.build_query(self.dataset_select.selected, self.county_select.selected, self.city_select.selected)
     json_media = anvil.server.call('export_json', query)
     anvil.media.download(json_media)
