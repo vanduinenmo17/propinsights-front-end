@@ -61,6 +61,8 @@ class DataDashboard(DataDashboardTemplate):
 
     # ---- Tabulator Data Table Filter ----
     self.type_dropdown.items = ['=','>','<','>=','<=','like','!=']
+
+    self._load_task = None  # holds the background Task object while running
   
   def select_data_button_click(self, **event_args):
     """This method is called when the button is clicked"""
@@ -68,15 +70,13 @@ class DataDashboard(DataDashboardTemplate):
     self.data_select_panel.visible = not self.data_select_panel.visible
 
   def pull_data_button_click(self, **event_args):
-    """This method is called when the button is clicked"""
+    # Ensure user is logged in (kept from your code)
     user = anvil.users.get_user()
     if not user:
-      # Will refresh the header; returns user or None if canceled
       user = user_ui.login_with_form_and_refresh(allow_cancel=True)
       if not user:
-        return  # user canceled login; stop here
+        return
   
-    # From here on, user is logged in — proceed as usual
     if not self.dataset_select.selected:
       alert('Please select a dataset')
       return
@@ -84,22 +84,68 @@ class DataDashboard(DataDashboardTemplate):
       alert('Please select a county')
       return
   
-    query = utils.build_query(self.dataset_select.selected, self.county_select.selected, self.city_select.selected)
+    query = utils.build_query(self.dataset_select.selected,
+                              self.county_select.selected,
+                              self.city_select.selected)
+  
+    # Show the dashboard shell immediately
     self.dashboard_panel.visible = True
   
-    def later():
-      fig, self.latlon_to_address, cfg = utils.get_map_data(query)
-      self.mapbox_map.config = cfg or {}
-      self.mapbox_map.figure = fig
-      data = anvil.server.call('get_table_data', query)
-      self.tabulator.replace_data(data)
-      self.tabulator.data = data
-      self.tabulator.redraw(True)
-      if data:
-        self.fields_dropdown.items = list(data[0].keys())
+    # Launch the background task directly from the client
+    # (returns immediately with a Task handle)
+    # self.progress_label.text = "Starting…"
+    self._load_task = anvil.server.launch_background_task('bg_build_map_and_table', query)
   
-    setTimeout(later, 100)
-   
+    # Start polling the task every 1 second
+    self.task_timer.enabled = True
+
+  def task_timer_tick(self, **event_args):
+  # Nothing to do if no task
+    if not self._load_task:
+      self.task_timer.enabled = False
+      return
+  
+    state = self._load_task.get_state()  # 'running' | 'completed' | 'failed'
+  
+    if state == 'running':
+      # Optional progress: get whatever the task set in task_state
+      prog = self._load_task.get_progress() or {}
+      stage = prog.get('stage')
+      if stage:
+        self.progress_label.text = f"Loading… {stage}"
+      return
+  
+    # Stop polling
+    self.task_timer.enabled = False
+  
+    if state == 'failed':
+      # Surface the server-side exception message
+      msg = self._load_task.get_error() or "Background task failed."
+      # self.progress_label.text = "Error"
+      alert(f"Data load failed:\n{msg}")
+      self._load_task = None
+      return
+  
+    # Completed: pull the result bundle and render
+    result = self._load_task.get_return_value()
+    self._load_task = None
+  
+    # Map
+    self.latlon_to_address = result.get('lookup', {})
+    self.mapbox_map.config = {'scrollZoom': True}
+    self.mapbox_map.figure = result.get('figure')
+  
+    # Table
+    data = result.get('records', [])
+    self.tabulator.replace_data(data)
+    self.tabulator.data = data
+    self.tabulator.redraw(True)
+  
+    # Populate filter fields dropdown
+    if data:
+      self.fields_dropdown.items = list(data[0].keys())
+  
+    # self.progress_label.text = "Done"
 
   def filter_button_click(self, **event_args):
     """This method is called when the button is clicked"""

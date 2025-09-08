@@ -88,3 +88,59 @@ def export_json(query):
   json_string = df.to_json(orient='records', indent=2)
   blob = anvil.BlobMedia('application/json', json_string.encode('utf-8'), name='data.json')
   return blob
+
+# NEW: background task that does all heavy work off the 30s call path
+@anvil.server.background_task
+def bg_build_map_and_table(query: str):
+  # Optional progress breadcrumbs users can see from the client
+  anvil.server.task_state['stage'] = 'querying BigQuery via Uplink'
+
+  # Call your existing Uplink function (runs on your GCE VM)
+  df_records = anvil.server.call('get_bigquery_data', query)
+  df = pd.DataFrame.from_dict(df_records)
+
+  anvil.server.task_state['stage'] = 'formatting dataframe'
+  # Fix LastSalesDate to ISO yyyy-mm-dd strings (keeps Tabulator happy)
+  if 'LastSalesDate' in df.columns:
+    s = pd.to_datetime(df['LastSalesDate'], utc=True, errors='coerce')
+    df['LastSalesDate'] = s.dt.strftime('%Y-%m-%d')
+
+  # Build the lookup dict for quick “click-to-filter” by address
+  anvil.server.task_state['stage'] = 'building map'
+  lookup_dict = {}
+  if {'LAT','LON','Address'}.issubset(df.columns):
+    lookup_dict = {
+      f"{round(row['LAT'], 6)},{round(row['LON'], 6)}": row['Address']
+      for _, row in df.iterrows()
+    }
+
+  # Plotly Mapbox figure (same as your current get_map_data)
+  trace = go.Scattermapbox(
+    lat=df['LAT'] if 'LAT' in df else [],
+    lon=df['LON'] if 'LON' in df else [],
+    mode='markers',
+    text=df['Address'] if 'Address' in df else [],
+    hoverinfo='text',
+    marker=dict(size=10),
+  )
+
+  layout = go.Layout(
+    mapbox=dict(
+      accesstoken="pk.eyJ1IjoidmFuZHVpbmVubW8xNyIsImEiOiJjbTkzMmg4OTIwaHZjMmpvamR2OXN1YWp1In0.SGzbF3O6SdZqfDsAsSoiaw",
+      center=dict(lat=39.747508, lon=-104.987833),
+      zoom=8,
+      style="open-street-map",
+    ),
+    margin=dict(t=0, b=0, l=0, r=0),
+  )
+  fig = go.Figure(data=[trace], layout=layout)
+
+  anvil.server.task_state['stage'] = 'serializing results'
+  records = df.to_dict(orient="records")
+
+  # Return a single bundle: figure, lookup, and table rows
+  return {
+    "figure": fig,
+    "lookup": lookup_dict,
+    "records": records,
+  }
