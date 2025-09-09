@@ -71,67 +71,78 @@ class DataDashboard(DataDashboardTemplate):
 
     # Holds the running background Task object
     self._load_task = None
+    self.latlon_to_address = {}
 
   def select_data_button_click(self, **event_args):
     self.data_select_panel.visible = not self.data_select_panel.visible
 
   def pull_data_button_click(self, **event_args):
-    # Ensure user is logged in
-    user = anvil.users.get_user()
-    if not user:
-      user = user_ui.login_with_form_and_refresh(allow_cancel=True)
+    # disable immediately to avoid double-starts
+    self.pull_data_button.enabled = False
+    try:
+      # Ensure user is logged in
+      user = anvil.users.get_user()
       if not user:
-        return
-
-    if not self.dataset_select.selected:
-      alert('Please select a dataset'); return
-    if not self.county_select.selected:
-      alert('Please select a county'); return
-
-    query = utils.build_query(
-      self.dataset_select.selected,
-      self.county_select.selected,
-      self.city_select.selected
-    )
-
-    # Show the dashboard shell immediately
-    self.dashboard_panel.visible = True
-
-    # -- IMPORTANT --
-    # Launch the background task from a *server callable* and
-    # get a task_id back. Then get a Task handle on the client.
-    self._load_task = anvil.server.call('start_long_load', query)
-    # Start polling once per second
-    self.task_timer.interval = 1.0
+        user = user_ui.login_with_form_and_refresh(allow_cancel=True)
+        if not user:
+          return
+  
+      if not self.dataset_select.selected:
+        alert('Please select a dataset'); return
+      if not self.county_select.selected:
+        alert('Please select a county'); return
+  
+      query = utils.build_query(
+        self.dataset_select.selected,
+        self.county_select.selected,
+        self.city_select.selected
+      )
+  
+      # Show the dashboard shell immediately
+      self.dashboard_panel.visible = True
+  
+      # -- IMPORTANT --
+      # Launch the background task from a *server callable* and
+      # get a task_id back. Then get a Task handle on the client.
+      self._load_task = anvil.server.call('start_long_load', query)
+      # Start polling once per second
+      self.task_timer.interval = 1.0
+    finally:
+      # If launch raised, re-enable the button so the UI isn't stuck
+      if not self.task_timer.interval:  # only re-enable if we didn't start polling
+        self.pull_data_button.enabled = True
 
   def task_timer_tick(self, **event_args):
-    if not self._load_task:
+    # Copy the reference immediately to avoid races
+    task = getattr(self, "_load_task", None)
+    if task is None:
+      # No active task → stop polling and exit
       self.task_timer.interval = 0
+      self.pull_data_button.enabled = True  # ← re-enable if no task
       return
   
-    # Use state or (if available in your runtime) termination status.
-    state = self._load_task.get_state()  # 'running' | 'completed' | 'failed'
+    state = task.get_state()  # 'running' | 'completed' | 'failed'
   
     if state == 'running':
-      # still working - keep polling
+      # Still working – keep polling
       return
   
     if state == 'failed':
-      # stop polling and surface error
+      # Stop polling and surface error
       self.task_timer.interval = 0
-      msg = self._load_task.get_error() or "Background task failed."
-      alert(f"Data load failed:\n{msg}")
+      err = task.get_error() or "Background task failed."
       self._load_task = None
+      alert(f"Data load failed:\n{err}")
+      self.pull_data_button.enabled = True # ← re-enable on failure
       return
   
-    # state == 'completed' (or anything that's not running/failed)
-    # It's possible get_return_value() is not ready yet; guard it
-    result = self._load_task.get_return_value()
+    # state is not running/failed: try to read the return value
+    result = task.get_return_value()
     if result is None:
-      # Task reports completed but the value isn't materialized yet – keep polling
+      # Task not fully materialised yet – keep polling
       return
   
-    # We have a real result: now stop polling
+    # We have a real result: stop polling and clear the handle
     self.task_timer.interval = 0
     self._load_task = None
   
@@ -149,44 +160,8 @@ class DataDashboard(DataDashboardTemplate):
     # Filter dropdown fields
     if data:
       self.fields_dropdown.items = list(data[0].keys())
-  
-      state = self._load_task.get_state()  # 'running' | 'completed' | 'failed'
-  
-      if state == 'running':
-        # Optional progress: if you later add a Label named progress_label, you can uncomment:
-        # prog = self._load_task.get_progress() or {}
-        # stage = prog.get('stage')
-        # if stage:
-        #   self.progress_label.text = f"Loading… {stage}"
-        return
-  
-      # Stop polling
-      self.task_timer.interval = 0
-  
-      if state == 'failed':
-        msg = self._load_task.get_error() or "Background task failed."
-        alert(f"Data load failed:\n{msg}")
-        self._load_task = None
-        return
-  
-      # Completed: get the result bundle and render
-      result = self._load_task.get_return_value()
-      self._load_task = None
-  
-      # Map
-      self.latlon_to_address = result.get('lookup', {})
-      self.mapbox_map.config = {'scrollZoom': True}
-      self.mapbox_map.figure = result.get('figure')
-  
-      # Table
-      data = result.get('records', [])
-      self.tabulator.replace_data(data)
-      self.tabulator.data = data
-      self.tabulator.redraw(True)
-  
-      # Filter dropdown fields
-      if data:
-        self.fields_dropdown.items = list(data[0].keys())
+
+    self.pull_data_button.enabled = True # ← re-enable on success
 
   def filter_button_click(self, **event_args):
     field = self.fields_dropdown.selected_value
