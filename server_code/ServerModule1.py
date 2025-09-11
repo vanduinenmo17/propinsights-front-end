@@ -6,167 +6,29 @@ from anvil.tables import app_tables
 import anvil.users
 import anvil.secrets
 import anvil.server
-import io
+import io, uuid, datetime as dt
 import pandas as pd
-import plotly.graph_objects as go
-import datetime as dt
-import uuid
 
-# Helper: fetch DataFrame via Uplink
-def get_property_data(query: str):
-  df_records = anvil.server.call('get_bigquery_data', query)  # uplink call (GCE VM)
-  df = pd.DataFrame.from_dict(df_records)
-  return df
-
-@anvil.server.callable
-def get_map_data(query: str):
-  df = get_property_data(query)
-
-  # Create lookup dict with string keys
-  lookup_dict = {
-    f"{round(row['LAT'], 6)},{round(row['LON'], 6)}": row['Address']
-    for _, row in df.iterrows()
-  }
-
-  # Build full Plotly Mapbox Map figure
-  trace = go.Scattermapbox(
-    lat=df['LAT'],
-    lon=df['LON'],
-    mode='markers',
-    text=df['Address'],
-    hoverinfo='text',
-    marker=dict(size=10)
-  )
-
-  layout = go.Layout(
-    mapbox=dict(
-      accesstoken="pk.eyJ1IjoidmFuZHVpbmVubW8xNyIsImEiOiJjbTkzMmg4OTIwaHZjMmpvamR2OXN1YWp1In0.SGzbF3O6SdZqfDsAsSoiaw",
-      center=dict(lat=39.747508, lon=-104.987833),
-      zoom=8,
-      style="open-street-map"
-    ),
-    margin=dict(t=0, b=0, l=0, r=0)
-  )
-
-  fig = go.Figure(data=[trace], layout=layout)
-  return {'figure': fig, 'lookup': lookup_dict}
-
-@anvil.server.callable
-def get_table_data(query):
-  df = get_property_data(query)
-  s = pd.to_datetime(df['LastSalesDate'], utc=True, errors='coerce')
-  df['LastSalesDate'] = s.dt.strftime('%Y-%m-%d')  # or '%Y-%m-%d'
-  records = df.to_dict(orient="records")
-  return records
-
-@anvil.server.callable
-def export_csv(query):
-  df = get_property_data(query)
-  csv_text = df.to_csv(index=False)
-  blob = anvil.BlobMedia("text/csv", csv_text.encode("utf-8"), name="data.csv")
-  return blob
-
-@anvil.server.callable
-def export_excel(query):
-  df = get_property_data(query)
-  excel_buffer = io.BytesIO()
-  df.to_excel(excel_buffer, index=False, engine='xlsxwriter')
-  excel_buffer.seek(0)
-  blob = anvil.BlobMedia(content=excel_buffer.read(),
-                         content_type="application/vnd.ms-excel",
-                         name='data.xlsx')
-  return blob
-
-@anvil.server.callable
-def export_json(query):
-  df = get_property_data(query)
-  json_string = df.to_json(orient='records', indent=2)
-  blob = anvil.BlobMedia('application/json', json_string.encode('utf-8'), name='data.json')
-  return blob
-
-# --- NEW: Background Task to do the heavy work off the 30s call path ---
-@anvil.server.background_task
-def bg_build_map_and_table(query: str):
-  try:
-    # progress breadcrumb (optional)
-    anvil.server.task_state['stage'] = 'querying BigQuery via Uplink'
-  
-    # Fetch via Uplink
-    df_records = anvil.server.call('get_bigquery_data', query)
-    df = pd.DataFrame.from_dict(df_records)
-  
-    # Format dates (for Tabulator)
-    anvil.server.task_state['stage'] = 'formatting dataframe'
-    if 'LastSalesDate' in df.columns:
-      s = pd.to_datetime(df['LastSalesDate'], utc=True, errors='coerce')
-      df['LastSalesDate'] = s.dt.strftime('%Y-%m-%d')
-  
-    # Build lookup
-    anvil.server.task_state['stage'] = 'building map'
-    lookup_dict = {}
-    if {'LAT','LON','Address'}.issubset(df.columns):
-      lookup_dict = {
-        f"{round(row['LAT'], 6)},{round(row['LON'], 6)}": row['Address']
-        for _, row in df.iterrows()
-      }
-  
-    # Plotly Mapbox figure
-    trace = go.Scattermapbox(
-      lat=df['LAT'] if 'LAT' in df else [],
-      lon=df['LON'] if 'LON' in df else [],
-      mode='markers',
-      text=df['Address'] if 'Address' in df else [],
-      hoverinfo='text',
-      marker=dict(size=10),
-    )
-    layout = go.Layout(
-      mapbox=dict(
-        accesstoken="pk.eyJ1IjoidmFuZHVpbmVubW8xNyIsImEiOiJjbTkzMmg4OTIwaHZjMmpvamR2OXN1YWp1In0.SGzbF3O6SdZqfDsAsSoiaw",
-        center=dict(lat=39.747508, lon=-104.987833),
-        zoom=8,
-        style="open-street-map",
-      ),
-      margin=dict(t=0, b=0, l=0, r=0),
-    )
-    fig = go.Figure(data=[trace], layout=layout)
-  
-    anvil.server.task_state['stage'] = 'serializing results'
-    records = df.to_dict(orient="records")
-  
-    # Return a single bundle
-    return {"figure": fig, "lookup": lookup_dict, "records": records}
-    
-  except Exception as e:
-    # ensure the task reports 'failed' and client sees .get_error()
-    anvil.server.task_state['error'] = str(e)
-    raise
-
-# --- NEW: Server-callable that launches the background task (required) ---
-@anvil.server.callable
-def start_long_load(query: str) -> str:
-  """
-  Launch bg_build_map_and_table on the server and return its task_id.
-  Tasks must be launched from server code, not client code.
-  """
-  task = anvil.server.launch_background_task('bg_build_map_and_table', query)
-  return task   # ← return the Task object itself
+# --- Expectation: Uplink provides `get_bigquery_media(query)` that returns a Parquet as an Anvil Media object.
 
 @anvil.server.background_task
 def bg_prepare_result(query: str):
-  media = anvil.server.call('get_bigquery_media', query)
-  # Inspect metadata for convenience
+  """Ask Uplink for a Parquet Media of the full result, record it in a temp table, return ids+meta."""
+  media = anvil.server.call('get_bigquery_media', query)  # <-- from your Uplink
   with anvil.media.TempFile(media) as tmp:
     df = pd.read_parquet(tmp)
     row_count = len(df)
     cols = list(df.columns)
 
   rid = str(uuid.uuid4())
-  app_tables.tmp_results.add_row(result_id=rid, media=media, row_count=row_count,
-                                 columns=cols, created=dt.datetime.utcnow())
+  app_tables.tmp_results.add_row(
+    result_id=rid, media=media, row_count=row_count, columns=cols, created=dt.datetime.utcnow()
+  )
   return {"result_id": rid, "row_count": row_count, "columns": cols}
 
 @anvil.server.callable
 def get_result_page(result_id: str, page: int, page_size: int = 1000):
+  """Read a page from staged Parquet and return just that slice as rows."""
   row = app_tables.tmp_results.get(result_id=result_id)
   if not row:
     raise Exception("Result expired or not found")
@@ -176,15 +38,22 @@ def get_result_page(result_id: str, page: int, page_size: int = 1000):
     df = pd.read_parquet(tmp)
     page_df = df.iloc[start:end].copy()
 
-  # (optional) normalize date columns, etc., to match your table
-  return {
-    "columns": row['columns'],
-    "rows": page_df.to_dict(orient="records"),
-    "row_count": row['row_count']
-  }
+  # normalize dates to ISO if needed:
+  if 'LastSalesDate' in page_df.columns:
+    s = pd.to_datetime(page_df['LastSalesDate'], utc=True, errors='coerce')
+    page_df['LastSalesDate'] = s.dt.strftime('%Y-%m-%d')
+
+  return {"columns": row['columns'], "rows": page_df.to_dict(orient="records"), "row_count": row['row_count']}
 
 @anvil.server.callable
 def delete_result(result_id: str):
   row = app_tables.tmp_results.get(result_id=result_id)
-  if row: 
+  if row:
     row.delete()
+
+# CHANGED: start the *prepare* task (staging) instead of building one giant bundle
+@anvil.server.callable
+def start_long_load(query: str):
+  """Launch the staging Background Task and return the Task object (client will poll it)."""
+  task = anvil.server.launch_background_task('bg_prepare_result', query)
+  return task
