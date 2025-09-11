@@ -10,6 +10,7 @@ import io
 import pandas as pd
 import plotly.graph_objects as go
 import datetime as dt
+import uuid
 
 # Helper: fetch DataFrame via Uplink
 def get_property_data(query: str):
@@ -149,3 +150,41 @@ def start_long_load(query: str) -> str:
   """
   task = anvil.server.launch_background_task('bg_build_map_and_table', query)
   return task   # ← return the Task object itself
+
+@anvil.server.background_task
+def bg_prepare_result(query: str):
+  media = anvil.server.call('get_bigquery_media', query)
+  # Inspect metadata for convenience
+  with anvil.media.TempFile(media) as tmp:
+    df = pd.read_parquet(tmp)
+    row_count = len(df)
+    cols = list(df.columns)
+
+  rid = str(uuid.uuid4())
+  app_tables.tmp_results.add_row(result_id=rid, media=media, row_count=row_count,
+                                 columns=cols, created=dt.datetime.utcnow())
+  return {"result_id": rid, "row_count": row_count, "columns": cols}
+
+@anvil.server.callable
+def get_result_page(result_id: str, page: int, page_size: int = 1000):
+  row = app_tables.tmp_results.get(result_id=result_id)
+  if not row:
+    raise Exception("Result expired or not found")
+
+  start, end = max(0, (page-1)*page_size), (page-1)*page_size + page_size
+  with anvil.media.TempFile(row['media']) as tmp:
+    df = pd.read_parquet(tmp)
+    page_df = df.iloc[start:end].copy()
+
+  # (optional) normalize date columns, etc., to match your table
+  return {
+    "columns": row['columns'],
+    "rows": page_df.to_dict(orient="records"),
+    "row_count": row['row_count']
+  }
+
+@anvil.server.callable
+def delete_result(result_id: str):
+  row = app_tables.tmp_results.get(result_id=result_id)
+  if row: 
+    row.delete()
