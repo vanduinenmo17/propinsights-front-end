@@ -1,1 +1,2 @@
 xlsxwriter
+pyarrow==21.0.0

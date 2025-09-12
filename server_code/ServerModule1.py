@@ -6,6 +6,7 @@ from anvil.tables import app_tables
 import anvil.users
 import anvil.secrets
 import anvil.server
+import anvil.media
 import io, uuid, datetime as dt
 import pandas as pd
 
