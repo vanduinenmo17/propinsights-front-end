@@ -64,24 +64,31 @@ def get_city_dict():
   return dict
 
 def build_query(dataset: list, county: list, city: list):
-  query = f"""
-      {list_to_select_phrase(DATA_LIST_COLUMNS)} FROM `real-estate-data-processing.DataLists.{dataset[0]}`
-      """
-  ## County if statement
-  if not city:
-    county_where_query = ''
-  else: 
-    county_where_query = f'WHERE County {list_to_in_phrase(county)}'
-    ## City if statement
-    if not city:
-      city_where_query = ''
-    elif county_where_query == '':
-      city_where_query =  f'WHERE City {list_to_in_phrase(city)}'
-    else:
-      city_where_query = f'AND City {list_to_in_phrase(city)}'
-      ## Construct full query
-  query = query + county_where_query + city_where_query
-  # print(query)
+  """
+    Build a BigQuery SELECT with required dataset+county and optional city filter.
+    - dataset: list with the chosen dataset name at [0]
+    - county: list of one or more county names (REQUIRED)
+    - city: list of 0+ city names (optional). Empty/None -> all cities (no city filter)
+    """
+  # Validate required inputs
+  if not dataset or not dataset[0]:
+    raise ValueError("You must select a dataset.")
+  if not county:
+    raise ValueError("You must select at least one county.")
+
+  select_sql = list_to_select_phrase(DATA_LIST_COLUMNS)
+  table_sql = f"`real-estate-data-processing.DataLists.{dataset[0]}`"
+
+  # Always filter by county
+  where_clauses = [f"County {list_to_in_phrase(county)}"]
+
+  # Add city filter only if provided (non-empty)
+  if city:
+    where_clauses.append(f"City {list_to_in_phrase(city)}")
+
+  where_sql = " WHERE " + " AND ".join(where_clauses)
+  query = f"{select_sql} FROM {table_sql}{where_sql}"
+  print(query)
   return query
 
 def get_map_data(query: str):
