@@ -58,3 +58,76 @@ def start_long_load(query: str):
   """Launch the staging Background Task and return the Task object (client will poll it)."""
   task = anvil.server.launch_background_task('bg_prepare_result', query)
   return task
+  
+# --- exports ---------------------------------------------------------------
+@anvil.server.callable
+def export_csv(*, result_id=None, query=None, filename="data.csv"):
+  media, _ = _resolve_media_for_export(result_id=result_id, query=query)
+  with anvil.media.TempFile(media) as tmp:
+    df = pd.read_parquet(tmp)
+  df = _normalize_dates(df)
+  csv_bytes = df.to_csv(index=False).encode("utf-8")
+  return anvil.BlobMedia("text/csv", csv_bytes, name=filename)  # client can anvil.media.download() :contentReference[oaicite:5]{index=5}
+
+@anvil.server.callable
+def export_excel(*, result_id=None, query=None, filename="data.xlsx"):
+  media, _ = _resolve_media_for_export(result_id=result_id, query=query)
+  with anvil.media.TempFile(media) as tmp:
+    df = pd.read_parquet(tmp)
+  df = _normalize_dates(df)
+  bio = io.BytesIO()
+  with pd.ExcelWriter(bio, engine="xlsxwriter") as w:
+    df.to_excel(w, index=False)
+  bio.seek(0)
+  # Official MIME for xlsx
+  return anvil.BlobMedia(
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    bio.read(), name=filename
+  )
+
+@anvil.server.callable
+def export_json(*, result_id=None, query=None, filename="data.json"):
+  media, _ = _resolve_media_for_export(result_id=result_id, query=query)
+  with anvil.media.TempFile(media) as tmp:
+    df = pd.read_parquet(tmp)
+  df = _normalize_dates(df)
+  js = df.to_json(orient="records", indent=2).encode("utf-8")
+  return anvil.BlobMedia("application/json", js, name=filename)
+
+# (optional) direct Parquet download of the staged file — fastest path
+@anvil.server.callable
+def export_parquet(*, result_id: str, filename="data.parquet"):
+  row = app_tables.tmp_results.get(result_id=result_id)
+  if not row:
+    raise Exception("Result expired or not found")
+  # Re-wrap to set a friendly filename in the download
+  return anvil.BlobMedia("application/octet-stream", row['media'].get_bytes(), name=filename)
+  
+# --- helpers ---------------------------------------------------------------
+def _resolve_media_for_export(*, result_id=None, query=None):
+  """
+  Return (media, columns) for an existing staged result (preferred),
+  or run the Uplink once (fallback) if only query is provided.
+  """
+  if result_id:
+    row = app_tables.tmp_results.get(result_id=result_id)
+    if not row:
+      raise Exception("Result expired or not found")
+    return row['media'], row['columns']
+
+  if query:
+    # One-off: fetch directly from Uplink and infer columns
+    media = anvil.server.call('get_bigquery_media', query)  # Uplink callable :contentReference[oaicite:3]{index=3}
+    with anvil.media.TempFile(media) as tmp:
+      df = pd.read_parquet(tmp)  # Parquet needs pyarrow/fastparquet installed in Anvil env :contentReference[oaicite:4]{index=4}
+      cols = list(df.columns)
+    return media, cols
+
+  raise Exception("Provide result_id or query")
+
+def _normalize_dates(df: pd.DataFrame) -> pd.DataFrame:
+  # Keep your table-friendly date format
+  if 'LastSalesDate' in df.columns:
+    s = pd.to_datetime(df['LastSalesDate'], utc=True, errors='coerce')
+    df['LastSalesDate'] = s.dt.strftime('%Y-%m-%d')
+  return df

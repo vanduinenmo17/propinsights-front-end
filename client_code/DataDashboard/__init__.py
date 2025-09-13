@@ -87,7 +87,6 @@ class DataDashboard(DataDashboardTemplate):
     self._fields_populated = False
 
   # ---------------- UI events ----------------
-
   def select_data_button_click(self, **event_args):
     self.data_select_panel.visible = not self.data_select_panel.visible
 
@@ -185,31 +184,26 @@ class DataDashboard(DataDashboardTemplate):
       user = user_ui.login_with_form_and_refresh(allow_cancel=True)
       if not user: 
         return
-    if not self.dataset_select.selected:
-      alert('Please select a dataset')
-      return
-    if not self.county_select.selected:
-      alert('Please select a county')
-      return
-    query = utils.build_query(self.dataset_select.selected, self.county_select.selected, self.city_select.selected)
-    csv_media = anvil.server.call('export_csv', query)
-    anvil.media.download(csv_media)
+    if self._result_id:
+      media_obj = anvil.server.call('export_csv', result_id=self._result_id, filename="data.csv")
+    else:
+      # fallback (will query once on the server)
+      q = self._ensure_query()
+      media_obj = anvil.server.call('export_csv', query=q, filename="data.csv")
+    anvil.media.download(media_obj)
 
   def download_excel(self, **event_args):
     user = anvil.users.get_user()
     if not user:
       user = user_ui.login_with_form_and_refresh(allow_cancel=True)
-      if not user:
+      if not user: 
         return
-    if not self.dataset_select.selected:
-      alert('Please select a dataset')
-      return
-    if not self.county_select.selected:
-      alert('Please select a county')
-      return
-    query = utils.build_query(self.dataset_select.selected, self.county_select.selected, self.city_select.selected)
-    excel_media = anvil.server.call('export_excel', query)
-    anvil.media.download(excel_media)
+    if self._result_id:
+      media_obj = anvil.server.call('export_excel', result_id=self._result_id, filename="data.xlsx")
+    else:
+      q = self._ensure_query()
+      media_obj = anvil.server.call('export_excel', query=q, filename="data.xlsx")
+    anvil.media.download(media_obj)
 
   def download_json(self, **event_args):
     user = anvil.users.get_user()
@@ -217,18 +211,20 @@ class DataDashboard(DataDashboardTemplate):
       user = user_ui.login_with_form_and_refresh(allow_cancel=True)
       if not user: 
         return
-    if not self.dataset_select.selected:
-      alert('Please select a dataset')
-      return
-    if not self.county_select.selected:
-      alert('Please select a county')
-      return
-    query = utils.build_query(self.dataset_select.selected, self.county_select.selected, self.city_select.selected)
-    json_media = anvil.server.call('export_json', query)
-    anvil.media.download(json_media)
+    if self._result_id:
+      media_obj = anvil.server.call('export_json', result_id=self._result_id, filename="data.json")
+    else:
+      q = self._ensure_query()
+      media_obj = anvil.server.call('export_json', query=q, filename="data.json")
+    anvil.media.download(media_obj)
 
   # --------------- helpers ----------------
-
+  def _ensure_query(self):
+    # helper to reuse your existing widgets → SQL builder
+    return utils.build_query(self.dataset_select.selected,
+                            self.county_select.selected,
+                            self.city_select.selected)
+    
   def _load_page(self, page:int):
     """Fetch one page from the staged Parquet and render table + map."""
     if not self._result_id:
