@@ -9,6 +9,7 @@ import anvil.server
 import anvil.media
 import io, uuid, datetime as dt
 import pandas as pd
+import plotly.graph_objects as go
 
 # --- Expectation: Uplink provides `get_bigquery_media(query)` that returns a Parquet as an Anvil Media object.
 @anvil.server.background_task
@@ -26,7 +27,58 @@ def bg_prepare_result(query: str):
   )
   return {"result_id": rid, "row_count": row_count, "columns": cols}
 
+@anvil.server.callable
+def get_clustered_map(result_id: str, max_points: int = 120_000):
+  """
+  Build a clustered Scattermapbox figure from the staged Parquet in tmp_results.
+  Returns a Plotly Figure (sent to client).
+  """
+  row = app_tables.tmp_results.get(result_id=result_id)
+  if not row:
+    raise Exception("Result expired or not found")
 
+  # Read just what we need; Parquet supports column projection (pyarrow)
+  with anvil.media.TempFile(row['media']) as tmp:
+    df = pd.read_parquet(tmp, columns=["LAT", "LON", "Address"])
+
+  # Clean & (optional) cap to keep JSON size manageable
+  df = df.dropna(subset=["LAT", "LON"])
+  if len(df) > max_points:
+    df = df.sample(n=max_points, random_state=0)
+
+  # Build the trace
+  trace = go.Scattermapbox(
+    lat=df["LAT"],
+    lon=df["LON"],
+    mode="markers",
+    text=df.get("Address", None),   # hover + we’ll use text for click-to-filter
+    hoverinfo="text",
+    marker=dict(size=9)
+  )
+
+  # Layout (use your token/center/zoom)
+  layout = go.Layout(
+    mapbox=dict(
+      accesstoken="YOUR_MAPBOX_TOKEN",
+      center=dict(lat=39.747508, lon=-104.987833),
+      zoom=8,
+      style="open-street-map",
+    ),
+    margin=dict(t=0, b=0, l=0, r=0),
+  )
+  fig = go.Figure(data=[trace], layout=layout)
+
+  # 🔑 Enable clustering + (optional) styling
+  fig.update_traces(
+    cluster=dict(
+      enabled=True,        # turn clustering ON
+      size=28,             # cluster circle size (px)
+      maxzoom=14,          # stop clustering beyond this zoom
+      step=50              # threshold step for style changes (see Plotly ref)
+    )
+  )
+
+  return fig
 
 @anvil.server.callable
 def get_result_page(result_id: str, page: int, page_size: int = 1000):

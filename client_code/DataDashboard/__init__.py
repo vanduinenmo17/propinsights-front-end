@@ -153,6 +153,11 @@ class DataDashboard(DataDashboardTemplate):
     self._fields_populated = False
     self._current_page = 1
 
+    # NEW: fetch & render clustered map for ALL points (capped by server)
+    clustered_fig = anvil.server.call('get_clustered_map', self._result_id)
+    self.mapbox_map.config = {'scrollZoom': True}
+    self.mapbox_map.figure = clustered_fig
+    
     self._load_page(self._current_page)
     self.pull_data_button.enabled = True
 
@@ -170,12 +175,12 @@ class DataDashboard(DataDashboardTemplate):
   def mapbox_map_click(self, points, **event_args):
     # With "basic" wiring we plot only the current page of points.
     if points:
-      clicked_point = points[0]
-      lat = round(clicked_point['lat'], 6)
-      lon = round(clicked_point['lon'], 6)
-      key = f"{lat},{lon}"
-      address = self.latlon_to_address.get(key, "Unknown address")
-      self.tabulator.set_filter('Address', '=', address)
+      pt = points[0]
+      # If the user clicked a single marker, 'text' holds the address.
+      # If they clicked a cluster bubble, 'text' may be None/empty.
+      address = pt.get('text')
+      if address:
+        self.tabulator.set_filter('Address', '=', address)
 
   # Downloads (unchanged)
   def download_csv(self, **event_args):
