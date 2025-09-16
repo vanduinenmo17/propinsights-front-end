@@ -59,7 +59,6 @@ def get_clustered_map(result_id: str, max_points: int = 120_000):
   # Layout (use your token/center/zoom)
   layout = go.Layout(
     mapbox=dict(
-      accesstoken="YOUR_MAPBOX_TOKEN",
       center=dict(lat=39.747508, lon=-104.987833),
       zoom=8,
       style="open-street-map",
