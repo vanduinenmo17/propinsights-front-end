@@ -11,7 +11,6 @@ import io, uuid, datetime as dt
 import pandas as pd
 
 # --- Expectation: Uplink provides `get_bigquery_media(query)` that returns a Parquet as an Anvil Media object.
-
 @anvil.server.background_task
 def bg_prepare_result(query: str):
   """Ask Uplink for a Parquet Media of the full result, record it in a temp table, return ids+meta."""
