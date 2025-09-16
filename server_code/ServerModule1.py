@@ -26,6 +26,8 @@ def bg_prepare_result(query: str):
   )
   return {"result_id": rid, "row_count": row_count, "columns": cols}
 
+
+
 @anvil.server.callable
 def get_result_page(result_id: str, page: int, page_size: int = 1000):
   """Read a page from staged Parquet and return just that slice as rows."""
