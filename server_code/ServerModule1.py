@@ -9,6 +9,9 @@ import anvil.server
 import anvil.media
 import io, uuid, datetime as dt
 import pandas as pd
+import pyarrow as pa
+import pyarrow.dataset as ds
+import pyarrow.compute as pc
 import plotly.graph_objects as go
 
 # --- Expectation: Uplink provides `get_bigquery_media(query)` that returns a Parquet as an Anvil Media object.
@@ -110,7 +113,61 @@ def start_long_load(query: str):
   """Launch the staging Background Task and return the Task object (client will poll it)."""
   task = anvil.server.launch_background_task('bg_prepare_result', query)
   return task
-  
+
+# ---- GLOBAL FILTERING OVER WHOLE PARQUET -------------------------------
+@anvil.server.callable
+def filter_result(result_id: str, field: str, op: str, value, page: int = 1, page_size: int = 1000):
+  """
+  Return one page of rows matching (field op value) from the ENTIRE staged result.
+  Falls back to Pandas if we cannot build a pushdown-friendly expression.
+  """
+  row = app_tables.tmp_results.get(result_id=result_id)
+  if not row:
+    raise Exception("Result expired or not found")
+
+  # Normalize operator spellings
+  op = (op or '').strip().lower()
+
+  # We'll always read all columns for the page we return
+  # (we could project fewer and re-join later, but keep it simple)
+  with anvil.media.TempFile(row['media']) as tmp:
+    # Try Arrow Dataset + predicate pushdown first (works well for =, !=, >, <, >=, <= on many types)
+    try:
+      dataset = ds.dataset(tmp, format="parquet")
+
+      # Build a dataset expression if supported
+      expr = _build_ds_expr(field, op, value)
+      if expr is None:
+        raise ValueError("no-dataset-expr")  # use Pandas fallback
+
+      # Get filtered table; if your pyarrow is recent, you can pass limit/offset in to_table()
+      # If that's not available in your runtime, we'll table->pandas->slice below.
+      tbl = dataset.to_table(filter=expr)  # projection could be added via columns=[...]
+
+      df = tbl.to_pandas(types_mapper=pd.ArrowDtype)  # keep types precise where possible
+    except Exception:
+      # Fallback: Pandas read and filter
+      df = pd.read_parquet(tmp)
+
+      # Apply vectorized filter in Pandas
+      df = _apply_pandas_filter(df, field, op, value)
+
+  # Total after filter
+  total = int(len(df))
+
+  # Page slice
+  start = max(0, (page - 1) * page_size)
+  end = start + page_size
+  page_df = df.iloc[start:end].copy()
+
+  # Normalize date columns like before
+  page_df = _normalize_dates(page_df)
+
+  return {
+    "rows": page_df.to_dict(orient="records"),
+    "row_count": total,
+    "columns": list(df.columns),
+  }
 # --- exports ---------------------------------------------------------------
 @anvil.server.callable
 def export_csv(*, result_id=None, query=None, filename="data.csv"):
@@ -183,3 +240,79 @@ def _normalize_dates(df: pd.DataFrame) -> pd.DataFrame:
     s = pd.to_datetime(df['LastSalesDate'], utc=True, errors='coerce')
     df['LastSalesDate'] = s.dt.strftime('%Y-%m-%d')
   return df
+
+def _build_ds_expr(field: str, op: str, value):
+  """
+  Build a pyarrow.dataset expression when we can (good for pushdown).
+  Return None to force Pandas fallback (e.g., LIKE).
+  """
+  f = ds.field(field)
+
+  # Try to coerce numeric strings where appropriate
+  val = _coerce_value(value)
+
+  if op in ('=', '=='):
+    return f == val
+  if op in ('!=', '<>'):
+    return f != val
+  if op == '>':
+    return f > val
+  if op == '<':
+    return f < val
+  if op == '>=':
+    return f >= val
+  if op == '<=':
+    return f <= val
+
+  # "like" (substring/regex) isn’t a pushdown-friendly predicate; handle in Pandas
+  if op == 'like':
+    return None
+
+  # Unknown operator → fallback
+  return None
+
+
+def _apply_pandas_filter(df: pd.DataFrame, field: str, op: str, value):
+  if field not in df.columns:
+    return df.iloc[0:0]  # empty
+
+  s = df[field]
+
+  # Try numeric compare if both sides numeric
+  v_num = pd.to_numeric(pd.Series([value]), errors='coerce').iloc[0]
+  col_numeric = pd.api.types.is_numeric_dtype(s)
+  if pd.notna(v_num) and col_numeric and op in ('=', '==','!=','<','>','<=','>='):
+    v = v_num
+  else:
+    v = value
+
+  if op in ('=', '=='):
+    return df[s == v]
+  if op in ('!=', '<>'):
+    return df[s != v]
+  if op == '>':
+    return df[s > v]
+  if op == '<':
+    return df[s < v]
+  if op == '>=':
+    return df[s >= v]
+  if op == '<=':
+    return df[s <= v]
+  if op == 'like':
+    # case-insensitive substring; fast vectorized contains
+    return df[s.astype(str).str.contains(str(v), case=False, na=False)]
+
+  # Unknown operator → return empty
+  return df.iloc[0:0]
+
+
+def _coerce_value(v):
+  # Try numeric
+  try:
+    if isinstance(v, str):
+      vv = float(v) if '.' in v else int(v)
+      return vv
+  except Exception:
+    pass
+  # Leave as-is (string, date-ish, etc.)
+  return v
