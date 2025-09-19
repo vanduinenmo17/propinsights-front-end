@@ -8,6 +8,7 @@ import anvil.tables.query as q
 from anvil.tables import app_tables
 import anvil.users
 import anvil.server
+from anvil.js.window import setTimeout
 from tabulator.Tabulator import Tabulator
 from anvil import media
 from .. import utils
@@ -85,6 +86,7 @@ class DataDashboard(DataDashboardTemplate):
     self._total_rows = 0
     self.latlon_to_address = {}
     self._fields_populated = False
+    self._clustered_map_mode = False
 
   # ---------------- UI events ----------------
   def select_data_button_click(self, **event_args):
@@ -153,6 +155,15 @@ class DataDashboard(DataDashboardTemplate):
     self._fields_populated = False
     self._current_page = 1
 
+    # NEW: fetch & render clustered map for ALL points (capped by server)
+    clustered_fig = anvil.server.call('get_clustered_map', self._result_id)
+    def _apply_clustered():
+      self.mapbox_map.config = {'scrollZoom': True}
+      self.mapbox_map.figure = clustered_fig
+      self._clustered_map_mode = True
+      
+    setTimeout(_apply_clustered, 50)
+    
     self._load_page(self._current_page)
     self.pull_data_button.enabled = True
 
@@ -170,12 +181,12 @@ class DataDashboard(DataDashboardTemplate):
   def mapbox_map_click(self, points, **event_args):
     # With "basic" wiring we plot only the current page of points.
     if points:
-      clicked_point = points[0]
-      lat = round(clicked_point['lat'], 6)
-      lon = round(clicked_point['lon'], 6)
-      key = f"{lat},{lon}"
-      address = self.latlon_to_address.get(key, "Unknown address")
-      self.tabulator.set_filter('Address', '=', address)
+      pt = points[0]
+      # If the user clicked a single marker, 'text' holds the address.
+      # If they clicked a cluster bubble, 'text' may be None/empty.
+      address = pt.get('text')
+      if address:
+        self.tabulator.set_filter('Address', '=', address)
 
   # Downloads (unchanged)
   def download_csv(self, **event_args):
@@ -243,8 +254,9 @@ class DataDashboard(DataDashboardTemplate):
     self.tabulator.data = rows
     self.tabulator.redraw(True)
 
-    # "basic" map = points for current page only
-    self._render_map_from_rows(rows)
+    # If we’re showing the global clustered map, don’t overwrite it
+    if not self._clustered_map_mode:
+      self._render_map_from_rows(rows)
 
     # pager
     self._current_page = page
