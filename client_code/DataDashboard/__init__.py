@@ -87,6 +87,7 @@ class DataDashboard(DataDashboardTemplate):
     self.latlon_to_address = {}
     self._fields_populated = False
     self._clustered_map_mode = False
+    self._active_filter = None
 
   # ---------------- UI events ----------------
   def select_data_button_click(self, **event_args):
@@ -168,15 +169,25 @@ class DataDashboard(DataDashboardTemplate):
     self.pull_data_button.enabled = True
 
   def filter_button_click(self, **event_args):
-    # This filters only the rows currently in the table (one page).
+  # Global filter: search the whole Parquet on the server, then page the matches
     field = self.fields_dropdown.selected_value
-    symbol = self.type_dropdown.selected_value
+    op = self.type_dropdown.selected_value
     value = self.value_box.text
-    self.tabulator.set_filter(field, symbol, value)
+  
+    if not self._result_id:
+      alert("Load a dataset first")
+      return
+  
+    self._active_filter = {"field": field, "op": op, "value": value}
+    self._current_page = 1
+    self._load_page(self._current_page)  # will route to filter_result()
 
   def reset_filter_button_click(self, **event_args):
-    self.tabulator.clear_filter()
+    self._active_filter = None
     self.value_box.text = ""
+    self.tabulator.clear_filter()  # client-side remnants (safe)
+    self._current_page = 1
+    self._load_page(self._current_page)  # back to unfiltered paging
 
   def mapbox_map_click(self, points, **event_args):
     # With "basic" wiring we plot only the current page of points.
@@ -236,29 +247,39 @@ class DataDashboard(DataDashboardTemplate):
                             self.county_select.selected,
                             self.city_select.selected)
     
-  def _load_page(self, page:int):
-    """Fetch one page from the staged Parquet and render table + map."""
+  def _load_page(self, page: int):
     if not self._result_id:
       return
-    out = anvil.server.call('get_result_page', self._result_id, page, self._page_size)
+  
+    if self._active_filter:
+      f = self._active_filter
+      out = anvil.server.call(
+        'filter_result',
+        self._result_id,
+        f["field"],
+        f["op"],
+        f["value"],
+        page,
+        self._page_size
+      )
+    else:
+      out = anvil.server.call('get_result_page', self._result_id, page, self._page_size)
+  
     rows = out.get("rows", [])
     self._total_rows = int(out.get("row_count", self._total_rows) or 0)
-
-    # set columns dropdown once
+  
     if rows and not self._fields_populated:
       self.fields_dropdown.items = list(rows[0].keys())
       self._fields_populated = True
-
-    # table
+  
     self.tabulator.replace_data(rows)
     self.tabulator.data = rows
     self.tabulator.redraw(True)
-
-    # If we’re showing the global clustered map, don’t overwrite it
-    if not self._clustered_map_mode:
+  
+    # If you’re showing the global clustered map, don’t overwrite it
+    if not getattr(self, "_clustered_map_mode", False):
       self._render_map_from_rows(rows)
-
-    # pager
+  
     self._current_page = page
     self._update_pager()
 
