@@ -7,6 +7,16 @@ components_by_slot:
         name: absentee_link
         properties: {font_family: Questrial, text: Absentee Owners, text_color: 'theme:Tertiary'}
         type: form:dep_kh96tq8oqpx0il:_Components.Link
+      - event_bindings: {click: out_of_state_link_click}
+        layout_properties: {grid_position: 'WWYBYC,LTQRXS'}
+        name: out_of_state_link
+        properties: {font_family: Questrial, text: Out of State Owners, text_color: 'theme:Tertiary'}
+        type: form:dep_kh96tq8oqpx0il:_Components.Link
+      - event_bindings: {click: multi_address_link_click}
+        layout_properties: {grid_position: 'FYWMKI,YNBUXH'}
+        name: multi_address_link
+        properties: {font_family: Questrial, text: Multi-Address Parcels, text_color: 'theme:Tertiary'}
+        type: form:dep_kh96tq8oqpx0il:_Components.Link
       - event_bindings: {click: columns_link_click}
         layout_properties: {grid_position: 'XIORRL,FGZQXR'}
         name: columns_link
@@ -35,7 +45,65 @@ components_by_slot:
           type: form:dep_kh96tq8oqpx0il:_Components.Card.CardContentContainer
         layout_properties: {grid_position: 'WYSYZJ,FIADXT'}
         name: absentee_card
-        properties: {}
+        properties: {appearance: elevated, background_color: 'theme:Secondary Container'}
+        type: form:dep_kh96tq8oqpx0il:_Components.Card
+      - layout_properties: {grid_position: 'DDBXKM,PNZFBK'}
+        name: anc_out_of_state
+        properties: {height: '.5'}
+        type: Spacer
+      - components:
+        - components:
+          - layout_properties: {slot: card-content-container-slot}
+            name: out_of_state_text
+            properties:
+              content: |-
+                #### Out of State Owners
+                What it is
+                Properties where the owner’s mailing address state differs from the property’s state. Practically, this is derived by comparing the assessor’s mailing address on the ownership record to the property’s situs (location) address—two distinct fields most assessor offices maintain
+
+                How we build it
+                Compare OwnerState to State (situs). If they differ, flag OutOfStateOwner = TRUE. The underlying distinction between mailing vs. situs comes directly from assessor practice.
+
+                Why investors care
+                This is a targeted subset of absentee ownership (owners who don’t occupy the property). It’s widely used to reach remote owners who may rely on third-party management or be less attached to the asset.
+            type: RichText
+          layout_properties: {slot: card-content-slot}
+          name: out_of_state_card_content_container
+          properties: {}
+          type: form:dep_kh96tq8oqpx0il:_Components.Card.CardContentContainer
+        layout_properties: {grid_position: 'WCWDND,UQLOMM'}
+        name: out_of_state_card
+        properties: {background_color: 'theme:Secondary Container'}
+        type: form:dep_kh96tq8oqpx0il:_Components.Card
+      - layout_properties: {grid_position: 'DBNJSO,ZIDNGA'}
+        name: anc_multi_address
+        properties: {height: '.5'}
+        type: Spacer
+      - components:
+        - components:
+          - layout_properties: {slot: card-content-container-slot}
+            name: multi_address_text
+            properties:
+              content: |-
+                #### Multi-Address Parcels
+                What it is
+                Parcels that have more than one valid address point associated with the same APN/parcel ID—e.g., duplexes/triplexes, properties with subaddresses (units/suites), or sites with an ADU. In GIS, this is modeled by joining address points (which can include subaddresses) to parcels and counting >1 address per parcel.
+
+                How we build it
+                Join your county/city address points layer to parcels on spatial containment or parcel ID; group by parcel and count addresses. Keep attributes like Unit/Subaddress where available. Esri and state GIS guidance explicitly address managing multiple addresses within a parcel and subaddress best practices.
+
+                Why investors care
+                - Quickly surfaces house-hack or small-multifamily opportunities and parcels already configured with multiple dwellings/units.
+
+                - In places expanding ADU allowances, these can align with value-add strategies (separate from legal splits).
+            type: RichText
+          layout_properties: {slot: card-content-slot}
+          name: multi_address_card_content_container
+          properties: {}
+          type: form:dep_kh96tq8oqpx0il:_Components.Card.CardContentContainer
+        layout_properties: {grid_position: 'JJVXYO,IXKYAV'}
+        name: multi_address_card
+        properties: {background_color: 'theme:Secondary Container'}
         type: form:dep_kh96tq8oqpx0il:_Components.Card
       - layout_properties: {grid_position: 'UKFCOQ,TVFMGK'}
         name: anc_columns
@@ -54,7 +122,7 @@ components_by_slot:
           type: form:dep_kh96tq8oqpx0il:_Components.Card.CardContentContainer
         layout_properties: {grid_position: 'VXAHVG,PWNYWQ'}
         name: columns_card
-        properties: {}
+        properties: {background_color: 'theme:Secondary Container'}
         type: form:dep_kh96tq8oqpx0il:_Components.Card
       layout_properties: {grid_position: 'UYSPDY,ZXDOEW'}
       name: docs_body_panel
