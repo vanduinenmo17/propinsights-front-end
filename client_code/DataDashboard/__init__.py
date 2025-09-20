@@ -274,6 +274,10 @@ class DataDashboard(DataDashboardTemplate):
   
     self.tabulator.replace_data(rows)
     self.tabulator.data = rows
+    # ensure columns are applied once we have a sample row
+    if rows and not getattr(self, "_columns_applied", False):
+      self._apply_columns_from_order(rows[0])
+      self._columns_applied = True
     self.tabulator.redraw(True)
   
     # If you’re showing the global clustered map, don’t overwrite it
@@ -326,6 +330,33 @@ class DataDashboard(DataDashboardTemplate):
     total_pages = max(1, (self._total_rows + self._page_size - 1) // self._page_size)
     if self._current_page < total_pages:
       self._load_page(self._current_page + 1)
+
+  def _apply_columns_from_order(self, sample_row: dict):
+    order = [
+    'Address','City','County','State','OwnerName','OwnerAddress','OwnerCity','OwnerState',
+    'OwnerZip','BuildingDescription','SF','Bedrooms','Bathrooms','YearBuilt','AssessedValue',
+    'LastSalesPrice','LastSalesDate','LAT','LON'
+  ]
+    # keep only fields that exist in the data, then append any extras
+    existing = [f for f in order if f in sample_row]
+    extras = [f for f in sample_row.keys() if f not in order]
+    fields_in_order = existing + extras
+  
+    cols = []
+    for f in fields_in_order:
+      col = {"title": f, "field": f, "headerSort": True, "hozAlign": "left"}
+      if f == "LastSalesDate":
+        col.update({
+          "formatter": "luxon_datetime",
+          "formatter_params": {"inputFormat": "iso", "outputFormat": "yyyy-LL-dd"}
+        })
+      # (optional) light formatting for numerics:
+      if f in ("SF", "Bedrooms", "Bathrooms", "YearBuilt", "AssessedValue", "LastSalesPrice", "LAT", "LON"):
+        col["hozAlign"] = "right"
+      cols.append(col)
+  
+    # Apply to Tabulator; in Anvil this property updates the underlying setColumns
+    self.tabulator.columns = cols
 
   # tidy up staged media when leaving
   def form_hide(self, **event_args):
