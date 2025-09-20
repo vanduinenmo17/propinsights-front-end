@@ -55,10 +55,15 @@ components:
     name: data_dashboard_link
     properties: {icon: 'fa:area-chart', role: null, text: Dashboard}
     type: Link
+  - event_bindings: {click: docs_link_click}
+    layout_properties: {grid_position: 'AOASZU,WPMNEZ'}
+    name: docs_link
+    properties: {icon: 'fa:book', role: null, text: Docs}
+    type: Link
   - event_bindings: {click: about_us_link_click}
     layout_properties: {grid_position: 'AKSICH,NSBLXU'}
     name: about_us_link
-    properties: {icon: 'fa:reorder', text: About Us}
+    properties: {icon: 'fa:info-circle', text: About Us}
     type: Link
   - event_bindings: {click: contact_us_link_click}
     layout_properties: {grid_position: 'XJKNGR,UAUCXX'}

@@ -35,7 +35,6 @@ class Homepage(HomepageTemplate):
     self.btn_login.visible = not logged_in
     self.btn_account.visible = logged_in
     if logged_in:
-      ## Users row is dict-like
       email = None
       try:
         email = user["email"]
@@ -45,15 +44,12 @@ class Homepage(HomepageTemplate):
       self.btn_account.text = email or "Account"
   
   def about_us_link_click(self, **event_args):
-    """This method is called when the link is clicked"""
     open_form('AboutUs')
 
   def contact_us_link_click(self, **event_args):
-    """This method is called when the link is clicked"""
     open_form('ContactUs')
 
   def data_dashboard_link_click(self, **event_args):
-    """This method is called when the link is clicked"""
     open_form('DataDashboard')
 
   def reset_links(self, **event_args):
@@ -61,15 +57,16 @@ class Homepage(HomepageTemplate):
     self.about_us_link.role = ''
 
   def landing_page_link_click(self, **event_args):
-    """This method is called when the link is clicked"""
     open_form('LandingPage')
 
   def open_account(self, **event_args):
     open_form('AccountForm')
 
+  def docs_link_click(self, **event_args):
+    open_form('Docs')
+
   def do_logout(self, **event_args):
     user_ui.logout_and_refresh()
 
   def btn_login_click(self, **event_args):
-    """This method is called when the component is clicked."""
     user_ui.login_with_form_and_refresh(allow_cancel=True)

@@ -1046,3 +1046,8 @@ div.plot-container.plotly svg.main-svg {
 .anvil-spinner {
     --anvil-spinner-bg: %color:Surface Variant%;
 }
+
+.anvil-role-scrollable-body {
+  height: calc(100vh - 72px);   /* viewport height minus header */
+  overflow: auto;               /* this ColumnPanel will scroll */
+}
