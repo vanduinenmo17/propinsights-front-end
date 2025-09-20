@@ -21,3 +21,9 @@ class Docs(DocsTemplate):
 
   def columns_link_click(self, **event_args):
     self.anc_columns.scroll_into_view()
+
+  def out_of_state_link_click(self, **event_args):
+    self.anc_out_of_state.scroll_into_view()
+
+  def multi_address_link_click(self, **event_args):
+    self.anc_multi_address.scroll_into_view()
