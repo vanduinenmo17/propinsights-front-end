@@ -26,7 +26,7 @@ class Homepage(HomepageTemplate):
       self.menu_item_logout
     ]
 
-    # ⬅️ Tell the helper which instance is THE layout, then paint it
+    ## Tell the helper which instance is THE layout, then paint it
     user_ui.register_layout(self)
 
   def refresh_account_ui(self):
@@ -35,7 +35,7 @@ class Homepage(HomepageTemplate):
     self.btn_login.visible = not logged_in
     self.btn_account.visible = logged_in
     if logged_in:
-      # Users row is dict-like
+      ## Users row is dict-like
       email = None
       try:
         email = user["email"]
