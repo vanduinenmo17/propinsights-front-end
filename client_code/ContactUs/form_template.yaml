@@ -1,9 +1,40 @@
 components_by_slot:
   main_slot:
+  - components:
+    - layout_properties: {grid_position: 'YKFWQN,PVMWWA'}
+      name: title_text
+      properties:
+        align: left
+        bold: true
+        font_family: Questrial
+        font_size: 24
+        role: null
+        spacing:
+          margin: [null, null, 5, null]
+        style: label
+        text: Contact Form
+      type: form:dep_kh96tq8oqpx0il:_Components.Text
+    - layout_properties: {grid_position: 'LDUBJP,LYQUBQ'}
+      name: first_name_textbox
+      properties: {align: left, appearance: outlined, label: First Name*, placeholder: ' '}
+      type: form:dep_kh96tq8oqpx0il:_Components.TextInput.TextBox
+    layout_properties: {}
+    name: contact_panel
+    properties: {}
+    type: ColumnPanel
   - layout_properties: {}
-    name: label_1
-    properties: {text: This is the contact us page!!!}
-    type: Label
+    name: last_name_textbox
+    properties: {align: left, appearance: outlined, label: Last Name*, placeholder: ' '}
+    type: form:dep_kh96tq8oqpx0il:_Components.TextInput.TextBox
+  - layout_properties: {}
+    name: message_textarea
+    properties: {appearance: outlined, label: Message*, placeholder: ' How can we help you?'}
+    type: form:dep_kh96tq8oqpx0il:_Components.TextInput.TextArea
+  - event_bindings: {click: submit_button_click}
+    layout_properties: {}
+    name: submit_button
+    properties: {align: center, text: Submit}
+    type: form:dep_kh96tq8oqpx0il:_Components.Button
 is_package: true
 layout:
   form_event_bindings: {show: form_show}

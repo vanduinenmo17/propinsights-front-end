@@ -1,5 +1,25 @@
 allow_embedding: false
 db_schema:
+  contact_us:
+    client: none
+    columns:
+    - admin_ui: {order: 0, width: 200}
+      name: first_name
+      type: string
+    - admin_ui: {order: 1, width: 200}
+      name: last_name
+      type: string
+    - admin_ui: {order: 2, width: 200}
+      name: email
+      type: string
+    - admin_ui: {order: 3, width: 200}
+      name: message
+      type: string
+    - admin_ui: {order: 4, width: 200}
+      name: created
+      type: datetime
+    server: full
+    title: contact_us
   tmp_results:
     client: none
     columns:
@@ -100,6 +120,9 @@ services:
 - client_config: {}
   server_config: {}
   source: /runtime/services/google.yml
+- client_config: {}
+  server_config: {}
+  source: /runtime/services/anvil/email.yml
 startup: {module: LandingPage, type: form}
 startup_form: null
 uplink_visible: true
