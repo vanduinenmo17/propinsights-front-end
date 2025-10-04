@@ -331,3 +331,7 @@ roles:
   name: outlined-error
 - components: [TextBox, TextArea, DatePicker, DropDown]
   name: input-error
+- components: [ColumnPanel]
+  display_in_toolbox: true
+  name: scrollable-body
+  title: Scrollable Body

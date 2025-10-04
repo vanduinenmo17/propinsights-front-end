@@ -15,6 +15,12 @@ import pyarrow.dataset as ds
 import pyarrow.compute as pc
 import plotly.graph_objects as go
 
+PREFERRED_ORDER = [
+  'Address','City','County','State','OwnerName','OwnerAddress','OwnerCity','OwnerState',
+  'OwnerZip','BuildingDescription','SF','Bedrooms','Bathrooms','YearBuilt','AssessedValue',
+  'LastSalesPrice','LastSalesDate','LAT','LON'
+]
+
 # --- Expectation: Uplink provides `get_bigquery_media(query)` that returns a Parquet as an Anvil Media object.
 @anvil.server.background_task
 def bg_prepare_result(query: str):
@@ -22,6 +28,7 @@ def bg_prepare_result(query: str):
   media = anvil.server.call('get_bigquery_media', query)  # <-- from your Uplink
   with anvil.media.TempFile(media) as tmp:
     df = pd.read_parquet(tmp)
+    df = _reorder_df(df) 
     row_count = len(df)
     cols = list(df.columns)
 
@@ -93,6 +100,7 @@ def get_result_page(result_id: str, page: int, page_size: int = 1000):
   start, end = max(0, (page-1)*page_size), (page-1)*page_size + page_size
   with anvil.media.TempFile(row['media']) as tmp:
     df = pd.read_parquet(tmp)
+    df = _reorder_df(df)
     page_df = df.iloc[start:end].copy()
 
   # normalize dates to ISO if needed:
@@ -163,6 +171,7 @@ def filter_result(result_id: str, field: str, op: str, value, page: int = 1, pag
 
   # Normalize date columns like before
   page_df = _normalize_dates(page_df)
+  page_df = _reorder_df(page_df)  
 
   return {
     "rows": page_df.to_dict(orient="records"),
@@ -306,7 +315,6 @@ def _apply_pandas_filter(df: pd.DataFrame, field: str, op: str, value):
   # Unknown operator → return empty
   return df.iloc[0:0]
 
-
 def _coerce_value(v):
   # Try numeric
   try:
@@ -317,3 +325,10 @@ def _coerce_value(v):
     pass
   # Leave as-is (string, date-ish, etc.)
   return v
+
+def _reorder_df(df: pd.DataFrame) -> pd.DataFrame:
+  # Bring preferred columns to the front (only those that exist),
+  # then append any extras at the end to avoid KeyErrors.
+  preferred = [c for c in PREFERRED_ORDER if c in df.columns]
+  extras = [c for c in df.columns if c not in PREFERRED_ORDER]
+  return df[preferred + extras]
