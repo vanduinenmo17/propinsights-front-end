@@ -28,14 +28,26 @@ components_by_slot:
       name: dataset_select
       properties: {placeholder: Select A Dataset, visible: true}
       type: form:dep_vdi8mw3mp30woi:MultiSelectDropDown
+    - layout_properties: {grid_position: 'EDCOCK,MDYGJG CHUSAF,MGEEMJ'}
+      name: corporate_checkbox
+      properties: {text: Include Corporate Entities}
+      type: form:dep_kh96tq8oqpx0il:_Components.Checkbox
     - layout_properties: {grid_position: 'EDCOCK,MDYGJG WSKJSM,TEFNOA'}
       name: county_select
-      properties: {placeholder: All}
+      properties: {enabled: true, placeholder: All}
       type: form:dep_vdi8mw3mp30woi:MultiSelectDropDown
+    - layout_properties: {grid_position: 'EDCOCK,MDYGJG WSKJSM,BXYFEX'}
+      name: corporate_checkbox_copy
+      properties: {text: Include Corporate Entities}
+      type: form:dep_kh96tq8oqpx0il:_Components.Checkbox
     - layout_properties: {grid_position: 'EDCOCK,MDYGJG FBFPKZ,CXEYRQ'}
       name: city_select
       properties: {placeholder: All}
       type: form:dep_vdi8mw3mp30woi:MultiSelectDropDown
+    - layout_properties: {grid_position: 'EDCOCK,MDYGJG FBFPKZ,ZUQXHE'}
+      name: checkbox_1
+      properties: {}
+      type: form:dep_kh96tq8oqpx0il:_Components.Checkbox
     - event_bindings: {click: pull_data_button_click}
       layout_properties: {grid_position: 'EDCOCK,MDYGJG FQQVZC,ZXMUCA'}
       name: pull_data_button
