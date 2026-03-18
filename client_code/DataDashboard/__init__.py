@@ -66,8 +66,11 @@ class DataDashboard(DataDashboardTemplate):
     self.pager_row.add_component(self.btn_next)
     self.dashboard_panel.add_component(self.pager_row)
 
-    # Hidden until user pulls data
-    self.dashboard_panel.visible = False
+    # Pager hidden initially
+    self.pager_row.visible = False
+
+    # Main dashboard panel always visible to hold the empty state
+    self.dashboard_panel.visible = True
 
     # Dataset selection
     self.dataset_select.items = utils.get_dataset_dict()
@@ -93,6 +96,19 @@ class DataDashboard(DataDashboardTemplate):
   def select_data_button_click(self, **event_args):
     self.data_select_panel.visible = not self.data_select_panel.visible
 
+  def county_select_change(self, **event_args):
+    selected_counties = self.county_select.selected
+    if not selected_counties:
+      self.freshness_label.text = "Data last updated: Select County"
+      return
+    
+    # Fetch freshness
+    try:
+      date_str = anvil.server.call('get_county_metadata', selected_counties)
+      self.freshness_label.text = f"Data last updated: {date_str}"
+    except Exception as e:
+      self.freshness_label.text = "Data last updated: Unknown"
+
   def pull_data_button_click(self, **event_args):
     self.pull_data_button.enabled = False
     try:
@@ -114,8 +130,6 @@ class DataDashboard(DataDashboardTemplate):
         self.county_select.selected,
         self.city_select.selected
       )
-
-      self.dashboard_panel.visible = True
 
       # Start the staging task (server launches @background_task)
       self._load_task = anvil.server.call('start_long_load', query)
@@ -139,7 +153,15 @@ class DataDashboard(DataDashboardTemplate):
       self.task_timer.interval = 0
       err = task.get_error() or "Background task failed."
       self._load_task = None
-      alert(f"Data preparation failed:\n{err}")
+      
+      err_str = str(err).lower()
+      if "timeout" in err_str or "time out" in err_str:
+        alert("The query took too long to execute. Try narrowing down your search criteria (e.g. fewer counties or limit by city).", title="Query Timed Out", large=True)
+      elif "memory" in err_str:
+        alert("The query returned too much data to process. Try selecting fewer counties.", title="Data Limit Reached", large=True)
+      else:
+        alert(f"Data preparation failed:\n{err}", title="Search Error", large=True)
+        
       self.pull_data_button.enabled = True
       return
 
@@ -153,6 +175,12 @@ class DataDashboard(DataDashboardTemplate):
 
     self._result_id = result.get('result_id')
     self._total_rows = int(result.get('row_count') or 0)
+    
+    if self._total_rows == 0:
+      alert("No properties found matching your criteria. Try broadening your filters or selecting a different dataset.", title="No Results Found")
+      self.pull_data_button.enabled = True
+      return
+
     self._fields_populated = False
     self._current_page = 1
 
@@ -162,8 +190,14 @@ class DataDashboard(DataDashboardTemplate):
       self.mapbox_map.config = {'scrollZoom': True}
       self.mapbox_map.figure = clustered_fig
       self._clustered_map_mode = True
+      self.mapbox_map.visible = True
       
     setTimeout(_apply_clustered, 50)
+    
+    # Hide empty state, show data tables
+    self.empty_state_panel.visible = False
+    self.tabulator.visible = True
+    self.pager_row.visible = True
     
     self._load_page(self._current_page)
     self.pull_data_button.enabled = True

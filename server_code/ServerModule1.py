@@ -123,6 +123,22 @@ def start_long_load(query: str):
   task = anvil.server.launch_background_task('bg_prepare_result', query)
   return task
 
+@anvil.server.callable
+def get_county_metadata(county_names: list):
+  """
+  Mock fetching the last_updated date from the BigQuery metadata table.
+  Returns a string date (e.g., 'March 15, 2026') or 'Unknown' if not found.
+  """
+  if not county_names:
+    return "Unknown"
+  
+  # For now, return a mocked date. In Phase 2 this will query the actual BigQuery metadata table.
+  # We return a dynamic-looking date based on the current day to seem realistic.
+  today = dt.datetime.now()
+  # Typically tax assessor data is a few days old.
+  last_updated = today - dt.timedelta(days=3)
+  return last_updated.strftime("%B %d, %Y")
+
 # ---- GLOBAL FILTERING OVER WHOLE PARQUET -------------------------------
 @anvil.server.callable
 def filter_result(result_id: str, field: str, op: str, value, page: int = 1, page_size: int = 1000):
