@@ -26,18 +26,19 @@ PropInsights (prop-insights.com) is a web application designed to provide real e
 
 ## Current MVP Data Status
 - Current frontend option target is **Adams County, CO / Absentee Owners**.
-- Dataset/county/city options are currently hard-coded in `client_code/utils.py`.
-- Freshness display is currently mocked in `server_code/ServerModule1.py`.
+- Dataset and county options are loaded from backend validation metadata through Uplink.
+- City options are loaded from the selected exposed list table.
+- Freshness display uses `server_code/ServerModule1.py` metadata calls instead of a mocked date.
 - Backend now publishes validation/freshness metadata in `real-estate-data-processing.Validation.DataProductStatus`.
-- The frontend should eventually use rows where `validation_status = 'passed'`, `freshness_status = 'current'`, and `exposed_to_frontend = TRUE`.
-- As of the latest backend validation, Adams master and Adams Absentee Owners are `passed` / `current`, but `exposed_to_frontend = false` until frontend availability is deliberately wired.
+- The frontend uses rows where `validation_status = 'passed'`, `freshness_status = 'current'`, and `exposed_to_frontend = TRUE`.
+- As of the latest frontend integration, Adams Absentee Owners is `passed` / `current` and `exposed_to_frontend = true`; Adams master remains hidden.
 
 ## Target Audience
 Real estate investors looking for leads, specific property lists, and broad market insights without having to manually scrape or prepare the data themselves.
 
 ## Development Roadmap Goals
-1. **Reliable Adams MVP:** Replace mocked freshness and hard-coded availability with backend validation metadata.
-2. **Uplink Documentation:** Inspect and document the `re-data-anvil-uplink` workspace before wiring dynamic metadata.
+1. **Reliable Adams MVP:** Verify backend-driven availability, freshness, city filters, query, map, pagination, and exports in the live Anvil app.
+2. **Uplink Documentation:** Keep `re-data-anvil-uplink` runtime docs current while deployment remains manual.
 3. **Data Expansion:** Increase the number of available counties only after backend validation/freshness and frontend availability agree.
 4. **More Curated Lists:** Increase the number of out-of-the-box datasets/lists available to users.
 5. **Custom List Builder:** Allow users to build custom property lists with comprehensive filtering UI.

@@ -73,9 +73,9 @@ class DataDashboard(DataDashboardTemplate):
     self.dashboard_panel.visible = True
 
     # Dataset selection
-    self.dataset_select.items = utils.get_dataset_dict()
-    self.county_select.items = utils.get_county_dict()
-    self.city_select.items = utils.get_city_dict()
+    self.dataset_select.items = []
+    self.county_select.items = []
+    self.city_select.items = []
     self.data_select_panel.visible = True
 
     # Client-side filter (affects current page only)
@@ -91,23 +91,39 @@ class DataDashboard(DataDashboardTemplate):
     self._fields_populated = False
     self._clustered_map_mode = False
     self._active_filter = None
+    self._availability = None
+
+    self._load_availability()
 
   # ---------------- UI events ----------------
   def select_data_button_click(self, **event_args):
     self.data_select_panel.visible = not self.data_select_panel.visible
 
+  def dataset_select_change(self, **event_args):
+    if self.county_select.selected:
+      self.county_select_change()
+
   def county_select_change(self, **event_args):
     selected_counties = self.county_select.selected
     if not selected_counties:
       self.freshness_label.text = "Data last updated: Select County"
+      self.city_select.items = []
       return
-    
-    # Fetch freshness
+
     try:
       date_str = anvil.server.call('get_county_metadata', selected_counties)
       self.freshness_label.text = f"Data last updated: {date_str}"
     except Exception as e:
       self.freshness_label.text = "Data last updated: Unknown"
+
+    try:
+      self.city_select.items = anvil.server.call(
+        'get_available_cities',
+        self.dataset_select.selected,
+        selected_counties
+      )
+    except Exception:
+      self.city_select.items = []
 
   def pull_data_button_click(self, **event_args):
     self.pull_data_button.enabled = False
@@ -275,6 +291,28 @@ class DataDashboard(DataDashboardTemplate):
     anvil.media.download(media_obj)
 
   # --------------- helpers ----------------
+  def _load_availability(self):
+    try:
+      availability = anvil.server.call('get_frontend_availability')
+    except Exception as e:
+      availability = {
+        "available": False,
+        "datasets": [],
+        "counties": [],
+        "message": f"Data availability is unavailable: {e}",
+      }
+
+    self._availability = availability
+    self.dataset_select.items = availability.get("datasets", [])
+    self.county_select.items = availability.get("counties", [])
+    self.city_select.items = []
+
+    has_options = bool(availability.get("available"))
+    self.pull_data_button.enabled = has_options
+    self.freshness_label.text = availability.get("message") or (
+      "Data last updated: Select County" if has_options else "No validated data products are currently exposed."
+    )
+
   def _ensure_query(self):
     # helper to reuse your existing widgets → SQL builder
     return utils.build_query(self.dataset_select.selected,

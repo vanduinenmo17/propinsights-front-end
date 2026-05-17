@@ -37,6 +37,7 @@ components_by_slot:
         layout_properties: {grid_position: 'LIDMFW,COJEBG'}
         name: dataset_select
         properties: {placeholder: Select A Dataset, visible: true}
+        event_bindings: {change: dataset_select_change}
         type: form:dep_vdi8mw3mp30woi:MultiSelectDropDown
       - layout_properties: {grid_position: 'DDNKVB,DGUWRD'}
         name: county_select

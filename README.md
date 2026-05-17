@@ -22,10 +22,10 @@ Use this README for frontend-specific orientation. See `.agent/project_context.m
 
 - `client_code/`: Anvil client forms and shared client helpers.
   - `DataDashboard/`: dataset/county/city selection, background load polling, table paging, filtering, map rendering, and export buttons.
-  - `utils.py`: current hard-coded dataset/county/city options and BigQuery query builder.
+  - `utils.py`: BigQuery query builder and legacy static option helpers.
   - `user_ui.py`: shared header/login/account behavior.
 - `server_code/`: Anvil server callables and background tasks.
-  - `ServerModule1.py`: Uplink data fetch, Parquet staging, filtering, map figure generation, exports, and mocked freshness metadata.
+  - `ServerModule1.py`: Uplink data fetch, metadata availability, Parquet staging, filtering, map figure generation, exports, and freshness metadata.
   - `contact_us_module.py`: contact form persistence and email notification.
 - `theme/`: Material 3 theme files and static assets.
 - `.agent/`: local agent context, roadmap, data contract, and repo hygiene notes.
@@ -42,11 +42,10 @@ Use this README for frontend-specific orientation. See `.agent/project_context.m
 
 ## Current Gaps
 
-- Dataset/county/city options are hard-coded in `client_code/utils.py`.
-- Freshness display is mocked in `get_county_metadata`.
-- Frontend availability is not yet driven by `real-estate-data-processing.Validation.DataProductStatus`.
-- Uplink behavior still needs direct inspection in the `re-data-anvil-uplink` workspace.
-- `exposed_to_frontend` is currently `false` for Adams metadata until frontend availability is intentionally wired.
+- Adams / Absentee Owners still needs live browser verification after the metadata wiring.
+- Frontend automated test coverage is minimal; most Anvil UI validation is still manual.
+- Uplink deployment remains manual on Compute Engine.
+- Credential rotation for previously exposed Uplink/GCP material remains a follow-up task.
 
 ## Development Notes
 

@@ -21,6 +21,24 @@ PREFERRED_ORDER = [
   'LastSalesPrice','LastSalesDate','LAT','LON'
 ]
 
+DATASET_TABLES = {
+  "AbsenteeOwners": "`real-estate-data-processing.DataLists.AbsenteeOwners`",
+}
+
+DATASET_LABELS = {
+  "AbsenteeOwners": "Absentee Owners",
+}
+
+DATA_PRODUCT_TABLES = {
+  "absentee_owners_adams_co": "AbsenteeOwners",
+}
+
+DATA_PRODUCT_NAMES = {
+  "absenteeowners": "AbsenteeOwners",
+  "absentee owners": "AbsenteeOwners",
+  "absentee_owners": "AbsenteeOwners",
+}
+
 # --- Expectation: Uplink provides `get_bigquery_media(query)` that returns a Parquet as an Anvil Media object.
 @anvil.server.background_task
 def bg_prepare_result(query: str):
@@ -126,18 +144,112 @@ def start_long_load(query: str):
 @anvil.server.callable
 def get_county_metadata(county_names: list):
   """
-  Mock fetching the last_updated date from the BigQuery metadata table.
-  Returns a string date (e.g., 'March 15, 2026') or 'Unknown' if not found.
+  Return the latest successful refresh date for the selected exposed products.
   """
   if not county_names:
     return "Unknown"
-  
-  # For now, return a mocked date. In Phase 2 this will query the actual BigQuery metadata table.
-  # We return a dynamic-looking date based on the current day to seem realistic.
-  today = dt.datetime.now()
-  # Typically tax assessor data is a few days old.
-  last_updated = today - dt.timedelta(days=3)
-  return last_updated.strftime("%B %d, %Y")
+
+  status_rows = _get_status_rows()
+  selected_counties = set(county_names or [])
+  matching_rows = [
+    row for row in status_rows
+    if row.get("county") in selected_counties
+    and row.get("validation_status") == "passed"
+    and row.get("freshness_status") == "current"
+    and row.get("last_successful_refresh_at")
+  ]
+
+  if not matching_rows:
+    return "Unavailable"
+
+  latest = max(row.get("last_successful_refresh_at") for row in matching_rows)
+  return _format_metadata_date(latest)
+
+@anvil.server.callable
+def get_frontend_availability():
+  """
+  Return data products the backend has explicitly exposed to the frontend.
+  Uplink filters this to exposed rows in Validation.DataProductStatus.
+  """
+  try:
+    rows = _get_status_rows()
+  except Exception as exc:
+    return {
+      "available": False,
+      "datasets": [],
+      "counties": [],
+      "message": f"Data availability is unavailable: {exc}",
+    }
+
+  product_rows = []
+  for row in rows:
+    if row.get("validation_status") != "passed" or row.get("freshness_status") != "current":
+      continue
+
+    dataset_value = _dataset_value_for_status(row)
+    if not dataset_value:
+      continue
+
+    product_rows.append({
+      "dataset_key": DATASET_LABELS.get(dataset_value, dataset_value),
+      "dataset_value": dataset_value,
+      "county_key": row.get("county"),
+      "county_value": row.get("county"),
+      "state": row.get("state"),
+      "entity_id": row.get("entity_id"),
+      "row_count": row.get("row_count"),
+      "last_successful_refresh_at": row.get("last_successful_refresh_at"),
+    })
+
+  datasets = _unique_options(
+    {"key": row["dataset_key"], "value": row["dataset_value"]}
+    for row in product_rows
+    if row.get("dataset_key") and row.get("dataset_value")
+  )
+  counties = _unique_options(
+    {"key": row["county_key"], "value": row["county_value"]}
+    for row in product_rows
+    if row.get("county_key") and row.get("county_value")
+  )
+
+  return {
+    "available": bool(datasets and counties),
+    "datasets": datasets,
+    "counties": counties,
+    "products": product_rows,
+    "message": "Select a data product and county." if product_rows else "No validated data products are currently exposed.",
+  }
+
+@anvil.server.callable
+def get_available_cities(dataset_values: list, county_names: list):
+  """Return city options for the selected exposed dataset/county pair."""
+  if not dataset_values or not county_names:
+    return []
+
+  dataset = dataset_values[0]
+  table = DATASET_TABLES.get(dataset)
+  if not table:
+    raise ValueError("Selected dataset is not available.")
+  if not _is_exposed_selection(dataset, county_names):
+    raise ValueError("Selected dataset/county is not exposed.")
+
+  query = f"""
+    SELECT DISTINCT City
+    FROM {table}
+    WHERE County {_sql_in_phrase(county_names)}
+      AND City IS NOT NULL
+      AND TRIM(City) != ''
+    ORDER BY City
+  """
+  media = anvil.server.call('get_bigquery_media', query)
+  with anvil.media.TempFile(media) as tmp:
+    df = pd.read_parquet(tmp)
+
+  return [
+    {"key": _display_city(row["City"]), "value": row["City"]}
+    for _, row in df.iterrows()
+    if row.get("City")
+  ]
 
 # ---- GLOBAL FILTERING OVER WHOLE PARQUET -------------------------------
 @anvil.server.callable
@@ -348,3 +460,69 @@ def _reorder_df(df: pd.DataFrame) -> pd.DataFrame:
   preferred = [c for c in PREFERRED_ORDER if c in df.columns]
   extras = [c for c in df.columns if c not in PREFERRED_ORDER]
   return df[preferred + extras]
+
+def _get_status_rows():
+  rows = anvil.server.call('get_data_product_status')
+  return rows or []
+
+def _dataset_value_for_status(row: dict):
+  entity_id = (row.get("entity_id") or "").lower()
+  if entity_id in DATA_PRODUCT_TABLES:
+    return DATA_PRODUCT_TABLES[entity_id]
+
+  for key in ("dataset_name", "table_name", "display_name"):
+    value = row.get(key)
+    if not value:
+      continue
+
+    normalized = str(value).strip().lower()
+    if normalized in DATA_PRODUCT_NAMES:
+      return DATA_PRODUCT_NAMES[normalized]
+    if value in DATASET_TABLES:
+      return value
+
+  return None
+
+def _is_exposed_selection(dataset, counties):
+  selected_counties = set(counties or [])
+  for row in _get_status_rows():
+    if row.get("validation_status") != "passed" or row.get("freshness_status") != "current":
+      continue
+    if _dataset_value_for_status(row) != dataset:
+      continue
+    if row.get("county") in selected_counties:
+      return True
+  return False
+
+def _unique_options(options):
+  seen = set()
+  unique = []
+  for option in options:
+    value = option.get("value")
+    if value in seen:
+      continue
+    seen.add(value)
+    unique.append(option)
+  return unique
+
+def _sql_in_phrase(values):
+  quoted = [f"'{str(value).replace(chr(39), chr(39) + chr(39))}'" for value in values]
+  return f"IN ({', '.join(quoted)})"
+
+def _display_city(city):
+  if not city:
+    return city
+  city = str(city)
+  if city.isupper():
+    return city.title()
+  return city
+
+def _format_metadata_date(value):
+  try:
+    if isinstance(value, dt.datetime):
+      parsed = value
+    else:
+      parsed = dt.datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+    return parsed.strftime("%B %d, %Y")
+  except Exception:
+    return str(value)

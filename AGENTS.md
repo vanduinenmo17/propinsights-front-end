@@ -17,14 +17,14 @@ Local docs are frontend working instructions. If local context conflicts with th
 - Read existing Anvil forms/helpers before changing behavior.
 - Prefer existing Anvil patterns, Material 3 roles, and shared helpers over new abstractions.
 - Keep frontend changes aligned with backend data contracts and Uplink capabilities.
-- Treat `Validation.DataProductStatus` as the future source for frontend availability and freshness, but inspect Uplink before wiring it.
+- Treat `Validation.DataProductStatus` as the source for frontend availability and freshness.
 - Keep app behavior branch-safe: the user tests feature branches before production merge.
 
 ## Important Paths
 
 - `client_code/DataDashboard/`: main data product experience.
-- `client_code/utils.py`: current dataset/county/city options and SQL builder.
-- `server_code/ServerModule1.py`: background data load, staging, filtering, map, exports, and mocked freshness.
+- `client_code/utils.py`: SQL builder and legacy static option helpers.
+- `server_code/ServerModule1.py`: metadata availability, background data load, staging, filtering, map, exports, and freshness.
 - `theme/assets/theme.css`: Material 3 visual system.
 - `anvil.yaml`: Anvil app configuration, services, dependencies, and encrypted secrets.
 
