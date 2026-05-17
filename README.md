@@ -1,88 +1,56 @@
-# About This [Anvil](https://anvil.works/?utm_source=github:app_README) App
+# PropInsights Frontend
 
-### Build web apps with nothing but Python.
+This repository contains the **PropInsights Anvil web app**. It is the user-facing product for real estate investors who want searchable, exportable property lists built from county tax assessor data.
 
-The app in this repository is built with [Anvil](https://anvil.works?utm_source=github:app_README), the framework for building web apps with nothing but Python. You can clone this app into your own Anvil account to use and modify.
+Canonical cross-repository project memory lives in the PropInsights Notion hub:
 
-Below, you will find:
-- [How to open this app](#opening-this-app-in-anvil-and-getting-it-online) in Anvil and deploy it online
-- Information [about Anvil](#about-anvil)
-- And links to some handy [documentation and tutorials](#tutorials-and-documentation)
+https://www.notion.so/2feea071fbd2808fbea0eb115f55d6db
 
-## Opening this app in Anvil and getting it online
+Use this README for frontend-specific orientation. See `.agent/project_context.md` for product context, `.agent/roadmap.md` for current frontend sequencing, `.agent/data_contract.md` for backend/Uplink expectations, and `.agent/repo_hygiene.md` for workspace rules.
 
-### Cloning the app
+## Current Product Shape
 
-Go to the [Anvil Editor](https://anvil.works/build?utm_source=github:app_README) (you might need to sign up for a free account) and click on “Clone from GitHub” (underneath the “Blank App” option):
+- Framework: Anvil.works.
+- Theme: Material Design 3 via the Anvil Material 3 dependency and `theme/assets/theme.css`.
+- Main startup form: `LandingPage`.
+- Primary app experience: `DataDashboard`.
+- Authentication: Anvil Users service.
+- Data access: Anvil server code calls an Uplink-provided callable named `get_bigquery_media(query)`, which returns Parquet media from BigQuery.
+- Current exposed MVP target: Adams County, CO / Absentee Owners.
 
-<img src="https://anvil.works/docs/version-control/img/git/clone-from-github.png" alt="Clone from GitHub"/>
+## Repository Layout
 
-Enter the URL of this GitHub repository. If you're not yet logged in, choose "GitHub credentials" as the authentication method and click "Connect to GitHub".
+- `client_code/`: Anvil client forms and shared client helpers.
+  - `DataDashboard/`: dataset/county/city selection, background load polling, table paging, filtering, map rendering, and export buttons.
+  - `utils.py`: current hard-coded dataset/county/city options and BigQuery query builder.
+  - `user_ui.py`: shared header/login/account behavior.
+- `server_code/`: Anvil server callables and background tasks.
+  - `ServerModule1.py`: Uplink data fetch, Parquet staging, filtering, map figure generation, exports, and mocked freshness metadata.
+  - `contact_us_module.py`: contact form persistence and email notification.
+- `theme/`: Material 3 theme files and static assets.
+- `.agent/`: local agent context, roadmap, data contract, and repo hygiene notes.
+- `anvil.yaml`: Anvil app configuration, services, dependencies, data tables, and encrypted secrets.
 
-<img src="https://anvil.works/docs/version-control/img/git/clone-app-from-git.png" alt="Clone App from Git modal"/>
+## Data Flow
 
-Finally, click "Clone App".
+1. A user selects dataset, county, and optionally city in `DataDashboard`.
+2. `client_code/utils.py` builds a BigQuery SQL query against `real-estate-data-processing.DataLists`.
+3. `server_code/ServerModule1.py` launches `bg_prepare_result`.
+4. The background task calls Uplink callable `get_bigquery_media(query)`.
+5. Uplink returns Parquet media, which the app stores in the Anvil `tmp_results` table.
+6. The dashboard pages/filter/exports from staged Parquet and renders a clustered Plotly map.
 
-This app will then be in your Anvil account, ready for you to run it or start editing it! **Any changes you make will be automatically pushed back to this repository, if you have permission!** You might want to [make a new branch](https://anvil.works/docs/version-control?utm_source=github:app_README).
+## Current Gaps
 
-### Running the app yourself:
+- Dataset/county/city options are hard-coded in `client_code/utils.py`.
+- Freshness display is mocked in `get_county_metadata`.
+- Frontend availability is not yet driven by `real-estate-data-processing.Validation.DataProductStatus`.
+- Uplink behavior still needs direct inspection in the `re-data-anvil-uplink` workspace.
+- `exposed_to_frontend` is currently `false` for Adams metadata until frontend availability is intentionally wired.
 
-Find the **Run** button at the top-right of the Anvil editor:
+## Development Notes
 
-<img src="https://anvil.works/docs/img/run-button-new-ide.png"/>
-
-
-### Publishing the app on your own URL
-
-Now you've cloned the app, you can [deploy it on the internet with two clicks](https://anvil.works/docs/deployment/quickstart?utm_source=github:app_README)! Find the **Publish** button at the top-right of the editor:
-
-<img src="https://anvil.works/docs/deployment/img/environments/publish-button.png"/>
-
-When you click it, you will see the Publish dialog:
-
-<img src="https://anvil.works/docs/deployment/img/quickstart/empty-environments-dialog.png"/>
-
-Click **Publish This App**, and you will see that your app has been deployed at a new, public URL:
-
-<img src="https://anvil.works/docs/deployment/img/quickstart/default-public-environment.png"/>
-
-That's it - **your app is now online**. Click the link and try it!
-
-## About Anvil
-
-If you’re new to Anvil, welcome! Anvil is a platform for building full-stack web apps with nothing but Python. No need to wrestle with JS, HTML, CSS, Python, SQL and all their frameworks – just build it all in Python.
-
-<figure>
-<figcaption><h3>Learn About Anvil In 80 Seconds👇</h3></figcaption>
-<a href="https://www.youtube.com/watch?v=3V-3g1mQ5GY" target="_blank">
-<img
-  src="https://anvil-website-static.s3.eu-west-2.amazonaws.com/anvil-in-80-seconds-YouTube.png"
-  alt="Anvil In 80 Seconds"
-/>
-</a>
-</figure>
-<br><br>
-
-[![Try Anvil Free](https://anvil-website-static.s3.eu-west-2.amazonaws.com/mark-complete.png)](https://anvil.works?utm_source=github:app_README)
-
-To learn more about Anvil, visit [https://anvil.works](https://anvil.works?utm_source=github:app_README).
-
-## Tutorials and documentation
-
-### Tutorials
-
-If you are just starting out with Anvil, why not **[try the 10-minute Feedback Form tutorial](https://anvil.works/learn/tutorials/feedback-form?utm_source=github:app_README)**? It features step-by-step tutorials that will introduce you to the most important parts of Anvil.
-
-Anvil has tutorials on:
-- [Building Dashboards](https://anvil.works/learn/tutorials/data-science#dashboarding?utm_source=github:app_README)
-- [Multi-User Applications](https://anvil.works/learn/tutorials/multi-user-apps?utm_source=github:app_README)
-- [Building Web Apps with an External Database](https://anvil.works/learn/tutorials/external-database?utm_source=github:app_README)
-- [Deploying Machine Learning Models](https://anvil.works/learn/tutorials/deploy-machine-learning-model?utm_source=github:app_README)
-- [Taking Payments with Stripe](https://anvil.works/learn/tutorials/stripe?utm_source=github:app_README)
-- And [much more....](https://anvil.works/learn/tutorials?utm_source=github:app_README)
-
-### Reference Documentation
-
-The Anvil reference documentation provides comprehensive information on how to use Anvil to build web applications. You can find the documentation [here](https://anvil.works/docs/overview?utm_source=github:app_README).
-
-If you want to get to the basics as quickly as possible, each section of this documentation features a [Quick-Start Guide](https://anvil.works/docs/overview/quickstarts?utm_source=github:app_README).
+- The `master` branch is tied to the live production site. Work on feature branches and let the user test before merging.
+- Keep Material 3 visual language consistent. Avoid ad hoc styling unless it belongs in `theme/assets/theme.css`.
+- Do not commit local Anvil data, generated files, credentials, or unencrypted secrets.
+- When changing data availability, coordinate with backend `Validation.DataProductStatus` and the Uplink query path.
