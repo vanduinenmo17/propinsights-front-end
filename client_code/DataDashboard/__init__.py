@@ -82,6 +82,8 @@ class DataDashboard(DataDashboardTemplate):
     self.data_select_panel.visible = True
     self.filter_panel.visible = False
     self.btn_download_data.enabled = False
+    self.corporations_label.visible = False
+    self.corporation_switch.visible = False
 
     # Client-side filter (affects current page only)
     self.type_dropdown.items = ['=','>','<','>=','<=','like','!=']
@@ -105,15 +107,15 @@ class DataDashboard(DataDashboardTemplate):
     self.data_select_panel.visible = not self.data_select_panel.visible
 
   def dataset_select_change(self, **event_args):
-    if not self.dataset_select.selected:
+    if not self._selected_values(self.dataset_select):
       self.city_select.items = []
       self.city_select.enabled = False
       return
-    if self.county_select.selected:
+    if self._selected_values(self.county_select):
       self.county_select_change()
 
   def county_select_change(self, **event_args):
-    selected_counties = self.county_select.selected
+    selected_counties = self._selected_values(self.county_select)
     if not selected_counties:
       self.freshness_label.text = "Data last updated: Select County"
       self.city_select.items = []
@@ -129,10 +131,10 @@ class DataDashboard(DataDashboardTemplate):
     try:
       city_items = anvil.server.call(
         'get_available_cities',
-        self.dataset_select.selected,
+        self._selected_values(self.dataset_select),
         selected_counties
       )
-      self.city_select.items = city_items
+      self.city_select.items = self._dropdown_items(city_items)
       self.city_select.enabled = bool(city_items)
     except Exception:
       self.city_select.items = []
@@ -149,17 +151,21 @@ class DataDashboard(DataDashboardTemplate):
         if not user:
           return
 
-      if not self.dataset_select.selected:
+      selected_datasets = self._selected_values(self.dataset_select)
+      selected_counties = self._selected_values(self.county_select)
+      selected_cities = self._selected_values(self.city_select)
+
+      if not selected_datasets:
         alert('Please select a dataset')
         return
-      if not self.county_select.selected:
+      if not selected_counties:
         alert('Please select a county')
         return
 
       query = utils.build_query(
-        self.dataset_select.selected,
-        self.county_select.selected,
-        self.city_select.selected
+        selected_datasets,
+        selected_counties,
+        selected_cities
       )
 
       # Start the staging task (server launches @background_task)
@@ -322,8 +328,10 @@ class DataDashboard(DataDashboardTemplate):
       }
 
     self._availability = availability
-    self.dataset_select.items = availability.get("datasets", [])
-    self.county_select.items = availability.get("counties", [])
+    datasets = availability.get("datasets", [])
+    counties = availability.get("counties", [])
+    self.dataset_select.items = self._dropdown_items(datasets)
+    self.county_select.items = self._dropdown_items(counties)
     self.city_select.items = []
 
     has_options = bool(availability.get("available"))
@@ -334,12 +342,17 @@ class DataDashboard(DataDashboardTemplate):
     self.freshness_label.text = availability.get("message") or (
       "Data last updated: Select County" if has_options else "No validated data products are currently exposed."
     )
+    if has_options:
+      self._select_single_option(self.dataset_select, datasets)
+      self._select_single_option(self.county_select, counties)
+      if self._selected_values(self.dataset_select) and self._selected_values(self.county_select):
+        self.county_select_change()
 
   def _ensure_query(self):
     # helper to reuse your existing widgets → SQL builder
-    return utils.build_query(self.dataset_select.selected,
-                            self.county_select.selected,
-                            self.city_select.selected)
+    return utils.build_query(self._selected_values(self.dataset_select),
+                            self._selected_values(self.county_select),
+                            self._selected_values(self.city_select))
     
   def _load_page(self, page: int):
     if not self._result_id:
@@ -451,6 +464,43 @@ class DataDashboard(DataDashboardTemplate):
   
     # Apply to Tabulator; in Anvil this property updates the underlying setColumns
     self.tabulator.columns = cols
+
+  def _dropdown_items(self, options):
+    items = []
+    for option in options or []:
+      if isinstance(option, dict):
+        key = option.get("key") or option.get("label") or option.get("value")
+        value = option.get("value") or key
+        if key is not None and value is not None:
+          items.append((str(key), value))
+      else:
+        items.append(option)
+    return items
+
+  def _selected_values(self, dropdown):
+    selected = getattr(dropdown, "selected", None)
+    if selected is None:
+      selected = getattr(dropdown, "selected_value", None)
+    if selected in (None, ""):
+      return []
+    if isinstance(selected, list):
+      return selected
+    if isinstance(selected, tuple):
+      return list(selected)
+    return [selected]
+
+  def _select_single_option(self, dropdown, options):
+    if len(options or []) != 1:
+      return
+    option = options[0]
+    value = option.get("value") if isinstance(option, dict) else option
+    try:
+      dropdown.selected = [value]
+    except Exception:
+      try:
+        dropdown.selected_value = value
+      except Exception:
+        pass
 
   # tidy up staged media when leaving
   def form_hide(self, **event_args):
