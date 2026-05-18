@@ -76,7 +76,12 @@ class DataDashboard(DataDashboardTemplate):
     self.dataset_select.items = []
     self.county_select.items = []
     self.city_select.items = []
+    self.dataset_select.enabled = False
+    self.county_select.enabled = False
+    self.city_select.enabled = False
     self.data_select_panel.visible = True
+    self.filter_panel.visible = False
+    self.btn_download_data.enabled = False
 
     # Client-side filter (affects current page only)
     self.type_dropdown.items = ['=','>','<','>=','<=','like','!=']
@@ -100,6 +105,10 @@ class DataDashboard(DataDashboardTemplate):
     self.data_select_panel.visible = not self.data_select_panel.visible
 
   def dataset_select_change(self, **event_args):
+    if not self.dataset_select.selected:
+      self.city_select.items = []
+      self.city_select.enabled = False
+      return
     if self.county_select.selected:
       self.county_select_change()
 
@@ -108,6 +117,7 @@ class DataDashboard(DataDashboardTemplate):
     if not selected_counties:
       self.freshness_label.text = "Data last updated: Select County"
       self.city_select.items = []
+      self.city_select.enabled = False
       return
 
     try:
@@ -117,16 +127,21 @@ class DataDashboard(DataDashboardTemplate):
       self.freshness_label.text = "Data last updated: Unknown"
 
     try:
-      self.city_select.items = anvil.server.call(
+      city_items = anvil.server.call(
         'get_available_cities',
         self.dataset_select.selected,
         selected_counties
       )
+      self.city_select.items = city_items
+      self.city_select.enabled = bool(city_items)
     except Exception:
       self.city_select.items = []
+      self.city_select.enabled = False
 
   def pull_data_button_click(self, **event_args):
     self.pull_data_button.enabled = False
+    self.filter_panel.visible = False
+    self.btn_download_data.enabled = False
     try:
       user = anvil.users.get_user()
       if not user:
@@ -195,6 +210,8 @@ class DataDashboard(DataDashboardTemplate):
     if self._total_rows == 0:
       alert("No properties found matching your criteria. Try broadening your filters or selecting a different dataset.", title="No Results Found")
       self.pull_data_button.enabled = True
+      self.filter_panel.visible = False
+      self.btn_download_data.enabled = False
       return
 
     self._fields_populated = False
@@ -213,7 +230,9 @@ class DataDashboard(DataDashboardTemplate):
     # Hide empty state, show data tables
     self.empty_state_panel.visible = False
     self.tabulator.visible = True
+    self.filter_panel.visible = True
     self.pager_row.visible = True
+    self.btn_download_data.enabled = True
     
     self._load_page(self._current_page)
     self.pull_data_button.enabled = True
@@ -308,6 +327,9 @@ class DataDashboard(DataDashboardTemplate):
     self.city_select.items = []
 
     has_options = bool(availability.get("available"))
+    self.dataset_select.enabled = has_options
+    self.county_select.enabled = has_options
+    self.city_select.enabled = False
     self.pull_data_button.enabled = has_options
     self.freshness_label.text = availability.get("message") or (
       "Data last updated: Select County" if has_options else "No validated data products are currently exposed."

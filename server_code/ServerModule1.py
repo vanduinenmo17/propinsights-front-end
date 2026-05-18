@@ -174,11 +174,13 @@ def get_frontend_availability():
   try:
     rows = _get_status_rows()
   except Exception as exc:
+    print(f"get_frontend_availability failed: {exc}")
     return {
       "available": False,
       "datasets": [],
       "counties": [],
-      "message": f"Data availability is unavailable: {exc}",
+      "message": "Data availability is temporarily unavailable. Please try again later.",
+      "error": str(exc),
     }
 
   product_rows = []
