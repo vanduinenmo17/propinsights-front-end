@@ -464,8 +464,45 @@ def _reorder_df(df: pd.DataFrame) -> pd.DataFrame:
   return df[preferred + extras]
 
 def _get_status_rows():
-  rows = anvil.server.call('get_data_product_status')
-  return rows or []
+  try:
+    rows = anvil.server.call('get_data_product_status')
+    return rows or []
+  except Exception as exc:
+    print(f"get_data_product_status unavailable, falling back to get_bigquery_media: {exc}")
+
+  media = anvil.server.call('get_bigquery_media', _status_rows_query())
+  with anvil.media.TempFile(media) as tmp:
+    df = pd.read_parquet(tmp)
+  df = df.astype(object).where(df.notna(), None)
+  for column in df.columns:
+    df[column] = df[column].apply(
+      lambda value: value.isoformat() if hasattr(value, "isoformat") else value
+    )
+  return df.to_dict(orient="records")
+
+def _status_rows_query():
+  return """
+    SELECT
+      entity_id,
+      entity_type,
+      display_name,
+      dataset_name,
+      table_name,
+      county,
+      state,
+      validation_status,
+      freshness_status,
+      last_successful_refresh_at,
+      last_validation_at,
+      row_count,
+      exposed_to_frontend,
+      workflow_name,
+      error_message,
+      updated_at
+    FROM `real-estate-data-processing.Validation.DataProductStatus`
+    WHERE exposed_to_frontend = TRUE
+    ORDER BY entity_type, state, county, display_name
+  """
 
 def _dataset_value_for_status(row: dict):
   entity_id = (row.get("entity_id") or "").lower()
