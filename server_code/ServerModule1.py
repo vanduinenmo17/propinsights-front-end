@@ -8,12 +8,14 @@ import anvil.users
 import anvil.secrets
 import anvil.server
 import anvil.media
-import io, uuid, datetime as dt
+import io, uuid, datetime as dt, json
 import pandas as pd
 import pyarrow as pa
 import pyarrow.dataset as ds
 import pyarrow.compute as pc
 import plotly.graph_objects as go
+
+GCP_PROJECT_ID = "real-estate-data-processing"
 
 PREFERRED_ORDER = [
   'Address','City','County','State','OwnerName','OwnerAddress','OwnerCity','OwnerState',
@@ -43,7 +45,7 @@ DATA_PRODUCT_NAMES = {
 @anvil.server.background_task
 def bg_prepare_result(query: str):
   """Ask Uplink for a Parquet Media of the full result, record it in a temp table, return ids+meta."""
-  media = anvil.server.call('get_bigquery_media', query)  # <-- from your Uplink
+  media = _get_bigquery_media(query)
   with anvil.media.TempFile(media) as tmp:
     df = pd.read_parquet(tmp)
     df = _reorder_df(df) 
@@ -243,7 +245,7 @@ def get_available_cities(dataset_values: list, county_names: list):
       AND TRIM(City) != ''
     ORDER BY City
   """
-  media = anvil.server.call('get_bigquery_media', query)
+  media = _get_bigquery_media(query)
   with anvil.media.TempFile(media) as tmp:
     df = pd.read_parquet(tmp)
 
@@ -366,13 +368,65 @@ def _resolve_media_for_export(*, result_id=None, query=None):
 
   if query:
     # One-off: fetch directly from Uplink and infer columns
-    media = anvil.server.call('get_bigquery_media', query)  # Uplink callable :contentReference[oaicite:3]{index=3}
+    media = _get_bigquery_media(query)
     with anvil.media.TempFile(media) as tmp:
       df = pd.read_parquet(tmp)  # Parquet needs pyarrow/fastparquet installed in Anvil env :contentReference[oaicite:4]{index=4}
       cols = list(df.columns)
     return media, cols
 
   raise Exception("Provide result_id or query")
+
+def _get_bigquery_media(query: str):
+  try:
+    return anvil.server.call('get_bigquery_media', query)
+  except Exception as exc:
+    print(f"get_bigquery_media unavailable, falling back to direct BigQuery: {exc}")
+    return _get_bigquery_media_direct(query)
+
+def _get_bigquery_media_direct(query: str):
+  df = _read_bigquery_direct(query)
+  parquet_bytes = df.to_parquet(index=False)
+  return anvil.BlobMedia(
+    "application/vnd.apache.parquet",
+    parquet_bytes,
+    name="bigquery_results.parquet",
+  )
+
+def _read_bigquery_direct(query: str):
+  try:
+    from google.cloud import bigquery
+  except Exception as exc:
+    raise Exception("BigQuery client library is unavailable in this Anvil runtime.") from exc
+
+  credentials = _bigquery_credentials()
+  if credentials:
+    client = bigquery.Client(project=GCP_PROJECT_ID, credentials=credentials)
+  else:
+    client = bigquery.Client(project=GCP_PROJECT_ID)
+
+  rows = [dict(row) for row in client.query(query).result()]
+  return pd.DataFrame(rows)
+
+def _bigquery_credentials():
+  try:
+    creds_value = anvil.secrets.get_secret("CREDS")
+  except Exception:
+    return None
+
+  if not creds_value:
+    return None
+
+  try:
+    from google.oauth2 import service_account
+  except Exception as exc:
+    raise Exception("Google service-account library is unavailable in this Anvil runtime.") from exc
+
+  if isinstance(creds_value, str):
+    creds_info = json.loads(creds_value, strict=False)
+  else:
+    creds_info = creds_value
+
+  return service_account.Credentials.from_service_account_info(creds_info)
 
 def _normalize_dates(df: pd.DataFrame) -> pd.DataFrame:
   # Keep your table-friendly date format
@@ -470,7 +524,7 @@ def _get_status_rows():
   except Exception as exc:
     print(f"get_data_product_status unavailable, falling back to get_bigquery_media: {exc}")
 
-  media = anvil.server.call('get_bigquery_media', _status_rows_query())
+  media = _get_bigquery_media(_status_rows_query())
   with anvil.media.TempFile(media) as tmp:
     df = pd.read_parquet(tmp)
   df = df.astype(object).where(df.notna(), None)
