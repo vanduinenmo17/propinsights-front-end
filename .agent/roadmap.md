@@ -23,35 +23,36 @@ Acceptance criteria:
 - `[x]` Anvil frontend exists with Material 3 theme.
 - `[x]` Landing page, auth, account menu, contact form, and dashboard forms exist.
 - `[x]` Data dashboard can query BigQuery through Uplink, stage Parquet media, page/filter results, render clustered maps, and export CSV/XLSX/JSON/Parquet.
-- `[x]` Current hard-coded product target is Adams / Absentee Owners.
-- `[ ]` Freshness display is still mocked in `server_code/ServerModule1.py`.
-- `[ ]` Dataset/county/city availability is hard-coded in `client_code/utils.py`.
-- `[ ]` Uplink workspace still needs direct inspection and documentation.
+- `[x]` Current product target is Adams / Absentee Owners.
+- `[x]` Freshness display is backed by `Validation.DataProductStatus`.
+- `[x]` Dataset/county availability is metadata-driven.
+- `[x]` City availability is queried from the selected exposed list table.
+- `[x]` Uplink workspace has been inspected and documented.
 
 ## Phase 1: Documentation Baseline
 
 - `[x]` Replace stock Anvil README with PropInsights-specific frontend orientation.
 - `[x]` Add frontend `AGENTS.md`.
 - `[x]` Add frontend roadmap, data contract, and repo hygiene docs.
-- `[ ]` Create or update Notion frontend repo page and link it from the hub.
+- `[x]` Create or update Notion frontend repo page and link it from the hub.
 
 ## Phase 2: Uplink Inspection
 
 Objective: understand how the frontend currently reaches BigQuery before wiring dynamic availability.
 
-- `[ ]` Open and inspect `re-data-anvil-uplink`.
-- `[ ]` Document `get_bigquery_media(query)`, credentials, security assumptions, query execution path, and operational limits.
-- `[ ]` Decide whether frontend should query `Validation.DataProductStatus` through the existing Parquet media path or a new metadata-specific Uplink callable.
+- `[x]` Open and inspect `re-data-anvil-uplink`.
+- `[x]` Document `get_bigquery_media(query)`, credentials, security assumptions, query execution path, and operational limits.
+- `[x]` Use a metadata-specific Uplink callable, `get_data_product_status()`, for frontend availability.
 
 ## Phase 3: Backend-Driven Availability
 
 Objective: replace hard-coded availability and mocked freshness with backend metadata.
 
-- `[ ]` Add a server callable that retrieves rows from `Validation.DataProductStatus`.
-- `[ ]` Generate dataset/county options from rows where `validation_status = 'passed'`, `freshness_status = 'current'`, and `exposed_to_frontend = TRUE`.
-- `[ ]` Replace `get_county_metadata` mocked dates with real metadata.
-- `[ ]` Add UI states for unavailable, stale, failed, and unknown metadata.
-- `[ ]` Keep Adams hidden until backend metadata intentionally flips `exposed_to_frontend = TRUE`.
+- `[x]` Add a server callable that retrieves rows from `Validation.DataProductStatus`.
+- `[x]` Generate dataset/county options from rows where `validation_status = 'passed'`, `freshness_status = 'current'`, and `exposed_to_frontend = TRUE`.
+- `[x]` Replace `get_county_metadata` mocked dates with real metadata.
+- `[x]` Add basic unavailable and unknown metadata states.
+- `[x]` Flip Adams Absentee Owners to `exposed_to_frontend = TRUE`; keep Adams master hidden.
 
 ## Phase 4: Reliable Adams UX
 

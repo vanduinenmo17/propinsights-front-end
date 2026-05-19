@@ -8,12 +8,14 @@ import anvil.users
 import anvil.secrets
 import anvil.server
 import anvil.media
-import io, uuid, datetime as dt
+import io, uuid, datetime as dt, json
 import pandas as pd
 import pyarrow as pa
 import pyarrow.dataset as ds
 import pyarrow.compute as pc
 import plotly.graph_objects as go
+
+GCP_PROJECT_ID = "real-estate-data-processing"
 
 PREFERRED_ORDER = [
   'Address','City','County','State','OwnerName','OwnerAddress','OwnerCity','OwnerState',
@@ -21,11 +23,29 @@ PREFERRED_ORDER = [
   'LastSalesPrice','LastSalesDate','LAT','LON'
 ]
 
+DATASET_TABLES = {
+  "AbsenteeOwners": "`real-estate-data-processing.DataLists.AbsenteeOwners`",
+}
+
+DATASET_LABELS = {
+  "AbsenteeOwners": "Absentee Owners",
+}
+
+DATA_PRODUCT_TABLES = {
+  "absentee_owners_adams_co": "AbsenteeOwners",
+}
+
+DATA_PRODUCT_NAMES = {
+  "absenteeowners": "AbsenteeOwners",
+  "absentee owners": "AbsenteeOwners",
+  "absentee_owners": "AbsenteeOwners",
+}
+
 # --- Expectation: Uplink provides `get_bigquery_media(query)` that returns a Parquet as an Anvil Media object.
 @anvil.server.background_task
 def bg_prepare_result(query: str):
   """Ask Uplink for a Parquet Media of the full result, record it in a temp table, return ids+meta."""
-  media = anvil.server.call('get_bigquery_media', query)  # <-- from your Uplink
+  media = _get_bigquery_media(query)
   with anvil.media.TempFile(media) as tmp:
     df = pd.read_parquet(tmp)
     df = _reorder_df(df) 
@@ -126,18 +146,114 @@ def start_long_load(query: str):
 @anvil.server.callable
 def get_county_metadata(county_names: list):
   """
-  Mock fetching the last_updated date from the BigQuery metadata table.
-  Returns a string date (e.g., 'March 15, 2026') or 'Unknown' if not found.
+  Return the latest successful refresh date for the selected exposed products.
   """
   if not county_names:
     return "Unknown"
-  
-  # For now, return a mocked date. In Phase 2 this will query the actual BigQuery metadata table.
-  # We return a dynamic-looking date based on the current day to seem realistic.
-  today = dt.datetime.now()
-  # Typically tax assessor data is a few days old.
-  last_updated = today - dt.timedelta(days=3)
-  return last_updated.strftime("%B %d, %Y")
+
+  status_rows = _get_status_rows()
+  selected_counties = set(county_names or [])
+  matching_rows = [
+    row for row in status_rows
+    if row.get("county") in selected_counties
+    and row.get("validation_status") == "passed"
+    and row.get("freshness_status") == "current"
+    and row.get("last_successful_refresh_at")
+  ]
+
+  if not matching_rows:
+    return "Unavailable"
+
+  latest = max(row.get("last_successful_refresh_at") for row in matching_rows)
+  return _format_metadata_date(latest)
+
+@anvil.server.callable
+def get_frontend_availability():
+  """
+  Return data products the backend has explicitly exposed to the frontend.
+  Uplink filters this to exposed rows in Validation.DataProductStatus.
+  """
+  try:
+    rows = _get_status_rows()
+  except Exception as exc:
+    print(f"get_frontend_availability failed: {exc}")
+    return {
+      "available": False,
+      "datasets": [],
+      "counties": [],
+      "message": "Data availability is temporarily unavailable. Please try again later.",
+      "error": str(exc),
+    }
+
+  product_rows = []
+  for row in rows:
+    if row.get("validation_status") != "passed" or row.get("freshness_status") != "current":
+      continue
+
+    dataset_value = _dataset_value_for_status(row)
+    if not dataset_value:
+      continue
+
+    product_rows.append({
+      "dataset_key": DATASET_LABELS.get(dataset_value, dataset_value),
+      "dataset_value": dataset_value,
+      "county_key": row.get("county"),
+      "county_value": row.get("county"),
+      "state": row.get("state"),
+      "entity_id": row.get("entity_id"),
+      "row_count": row.get("row_count"),
+      "last_successful_refresh_at": row.get("last_successful_refresh_at"),
+    })
+
+  datasets = _unique_options(
+    {"key": row["dataset_key"], "value": row["dataset_value"]}
+    for row in product_rows
+    if row.get("dataset_key") and row.get("dataset_value")
+  )
+  counties = _unique_options(
+    {"key": row["county_key"], "value": row["county_value"]}
+    for row in product_rows
+    if row.get("county_key") and row.get("county_value")
+  )
+
+  return {
+    "available": bool(datasets and counties),
+    "datasets": datasets,
+    "counties": counties,
+    "products": product_rows,
+    "message": "Select a data product and county." if product_rows else "No validated data products are currently exposed.",
+  }
+
+@anvil.server.callable
+def get_available_cities(dataset_values: list, county_names: list):
+  """Return city options for the selected exposed dataset/county pair."""
+  if not dataset_values or not county_names:
+    return []
+
+  dataset = dataset_values[0]
+  table = DATASET_TABLES.get(dataset)
+  if not table:
+    raise ValueError("Selected dataset is not available.")
+  if not _is_exposed_selection(dataset, county_names):
+    raise ValueError("Selected dataset/county is not exposed.")
+
+  query = f"""
+    SELECT DISTINCT City
+    FROM {table}
+    WHERE County {_sql_in_phrase(county_names)}
+      AND City IS NOT NULL
+      AND TRIM(City) != ''
+    ORDER BY City
+  """
+  media = _get_bigquery_media(query)
+  with anvil.media.TempFile(media) as tmp:
+    df = pd.read_parquet(tmp)
+
+  return [
+    {"key": _display_city(row["City"]), "value": row["City"]}
+    for _, row in df.iterrows()
+    if row.get("City")
+  ]
 
 # ---- GLOBAL FILTERING OVER WHOLE PARQUET -------------------------------
 @anvil.server.callable
@@ -252,13 +368,65 @@ def _resolve_media_for_export(*, result_id=None, query=None):
 
   if query:
     # One-off: fetch directly from Uplink and infer columns
-    media = anvil.server.call('get_bigquery_media', query)  # Uplink callable :contentReference[oaicite:3]{index=3}
+    media = _get_bigquery_media(query)
     with anvil.media.TempFile(media) as tmp:
       df = pd.read_parquet(tmp)  # Parquet needs pyarrow/fastparquet installed in Anvil env :contentReference[oaicite:4]{index=4}
       cols = list(df.columns)
     return media, cols
 
   raise Exception("Provide result_id or query")
+
+def _get_bigquery_media(query: str):
+  try:
+    return anvil.server.call('get_bigquery_media', query)
+  except Exception as exc:
+    print(f"get_bigquery_media unavailable, falling back to direct BigQuery: {exc}")
+    return _get_bigquery_media_direct(query)
+
+def _get_bigquery_media_direct(query: str):
+  df = _read_bigquery_direct(query)
+  parquet_bytes = df.to_parquet(index=False)
+  return anvil.BlobMedia(
+    "application/vnd.apache.parquet",
+    parquet_bytes,
+    name="bigquery_results.parquet",
+  )
+
+def _read_bigquery_direct(query: str):
+  try:
+    from google.cloud import bigquery
+  except Exception as exc:
+    raise Exception("BigQuery client library is unavailable in this Anvil runtime.") from exc
+
+  credentials = _bigquery_credentials()
+  if credentials:
+    client = bigquery.Client(project=GCP_PROJECT_ID, credentials=credentials)
+  else:
+    client = bigquery.Client(project=GCP_PROJECT_ID)
+
+  rows = [dict(row) for row in client.query(query).result()]
+  return pd.DataFrame(rows)
+
+def _bigquery_credentials():
+  try:
+    creds_value = anvil.secrets.get_secret("CREDS")
+  except Exception:
+    return None
+
+  if not creds_value:
+    return None
+
+  try:
+    from google.oauth2 import service_account
+  except Exception as exc:
+    raise Exception("Google service-account library is unavailable in this Anvil runtime.") from exc
+
+  if isinstance(creds_value, str):
+    creds_info = json.loads(creds_value, strict=False)
+  else:
+    creds_info = creds_value
+
+  return service_account.Credentials.from_service_account_info(creds_info)
 
 def _normalize_dates(df: pd.DataFrame) -> pd.DataFrame:
   # Keep your table-friendly date format
@@ -348,3 +516,106 @@ def _reorder_df(df: pd.DataFrame) -> pd.DataFrame:
   preferred = [c for c in PREFERRED_ORDER if c in df.columns]
   extras = [c for c in df.columns if c not in PREFERRED_ORDER]
   return df[preferred + extras]
+
+def _get_status_rows():
+  try:
+    rows = anvil.server.call('get_data_product_status')
+    return rows or []
+  except Exception as exc:
+    print(f"get_data_product_status unavailable, falling back to get_bigquery_media: {exc}")
+
+  media = _get_bigquery_media(_status_rows_query())
+  with anvil.media.TempFile(media) as tmp:
+    df = pd.read_parquet(tmp)
+  df = df.astype(object).where(df.notna(), None)
+  for column in df.columns:
+    df[column] = df[column].apply(
+      lambda value: value.isoformat() if hasattr(value, "isoformat") else value
+    )
+  return df.to_dict(orient="records")
+
+def _status_rows_query():
+  return """
+    SELECT
+      entity_id,
+      entity_type,
+      display_name,
+      dataset_name,
+      table_name,
+      county,
+      state,
+      validation_status,
+      freshness_status,
+      last_successful_refresh_at,
+      last_validation_at,
+      row_count,
+      exposed_to_frontend,
+      workflow_name,
+      error_message,
+      updated_at
+    FROM `real-estate-data-processing.Validation.DataProductStatus`
+    WHERE exposed_to_frontend = TRUE
+    ORDER BY entity_type, state, county, display_name
+  """
+
+def _dataset_value_for_status(row: dict):
+  entity_id = (row.get("entity_id") or "").lower()
+  if entity_id in DATA_PRODUCT_TABLES:
+    return DATA_PRODUCT_TABLES[entity_id]
+
+  for key in ("dataset_name", "table_name", "display_name"):
+    value = row.get(key)
+    if not value:
+      continue
+
+    normalized = str(value).strip().lower()
+    if normalized in DATA_PRODUCT_NAMES:
+      return DATA_PRODUCT_NAMES[normalized]
+    if value in DATASET_TABLES:
+      return value
+
+  return None
+
+def _is_exposed_selection(dataset, counties):
+  selected_counties = set(counties or [])
+  for row in _get_status_rows():
+    if row.get("validation_status") != "passed" or row.get("freshness_status") != "current":
+      continue
+    if _dataset_value_for_status(row) != dataset:
+      continue
+    if row.get("county") in selected_counties:
+      return True
+  return False
+
+def _unique_options(options):
+  seen = set()
+  unique = []
+  for option in options:
+    value = option.get("value")
+    if value in seen:
+      continue
+    seen.add(value)
+    unique.append(option)
+  return unique
+
+def _sql_in_phrase(values):
+  quoted = [f"'{str(value).replace(chr(39), chr(39) + chr(39))}'" for value in values]
+  return f"IN ({', '.join(quoted)})"
+
+def _display_city(city):
+  if not city:
+    return city
+  city = str(city)
+  if city.isupper():
+    return city.title()
+  return city
+
+def _format_metadata_date(value):
+  try:
+    if isinstance(value, dt.datetime):
+      parsed = value
+    else:
+      parsed = dt.datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+    return parsed.strftime("%B %d, %Y")
+  except Exception:
+    return str(value)

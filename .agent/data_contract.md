@@ -8,7 +8,7 @@ This document captures what the Anvil frontend expects from the backend pipeline
 - County: Adams, CO.
 - Table: `real-estate-data-processing.DataLists.AbsenteeOwners`.
 - Backend status table: `real-estate-data-processing.Validation.DataProductStatus`.
-- Current backend status: Adams master and Adams Absentee Owners are `passed` / `current`; `exposed_to_frontend` remains `false` until frontend availability is intentionally wired.
+- Current backend status: Adams Absentee Owners is `passed` / `current` and `exposed_to_frontend = true`; Adams master remains `passed` / `current` but hidden from frontend selection.
 
 ## List Columns
 
@@ -49,19 +49,20 @@ Relevant fields:
 - `error_message`
 - `updated_at`
 
-## Current Implementation Gap
+## Current Implementation
 
-Current frontend behavior is hard-coded:
+Previous frontend behavior was hard-coded:
 
 - `get_dataset_dict()` returns Absentee Owners.
 - `get_county_dict()` returns Adams.
 - `get_city_dict()` returns a static city list.
 - `get_county_metadata()` returns a mocked date.
 
-Before changing this, inspect the Uplink workspace and decide whether metadata should be fetched through:
+Current frontend behavior:
 
-- the existing `get_bigquery_media(query)` Parquet path, or
-- a narrower metadata callable that returns structured rows directly.
+- `get_frontend_availability()` reads metadata through Uplink `get_data_product_status()`.
+- `get_county_metadata()` returns real refresh dates from exposed metadata rows.
+- `get_available_cities()` reads distinct city values from the selected exposed list table.
 
 ## Query Path
 
