@@ -74,6 +74,11 @@ Current query flow:
 4. Server stores media in `tmp_results`.
 5. Client pages, filters, maps, and exports from staged Parquet.
 
+Anvil does not run direct BigQuery queries itself. A previous fallback path attempted
+to import Google BigQuery client libraries inside the Anvil runtime, but that runtime
+does not provide those dependencies. Uplink is the supported BigQuery bridge for the
+live Anvil app.
+
 ## Data Semantics To Preserve
 
 - `LastSalesDate` may be null when source sales history is missing.
