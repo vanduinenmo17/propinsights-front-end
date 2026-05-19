@@ -23,11 +23,12 @@ Acceptance criteria:
 - `[x]` Anvil frontend exists with Material 3 theme.
 - `[x]` Landing page, auth, account menu, contact form, and dashboard forms exist.
 - `[x]` Data dashboard can query BigQuery through Uplink, stage Parquet media, page/filter results, render clustered maps, and export CSV/XLSX/JSON/Parquet.
+- `[x]` Working dashboard fixes have been merged to `master`; follow-up cleanup work should branch from current `master`.
 - `[x]` Current product target is Adams / Absentee Owners.
 - `[x]` Freshness display is backed by `Validation.DataProductStatus`.
 - `[x]` Dataset/county availability is metadata-driven.
 - `[x]` City availability is queried from the selected exposed list table.
-- `[x]` Uplink workspace has been inspected and documented.
+- `[x]` Uplink workspace has been inspected and documented. The live Uplink key mismatch was fixed on the VM, and Anvil should treat Uplink as the required BigQuery bridge.
 
 ## Phase 1: Documentation Baseline
 
@@ -58,11 +59,12 @@ Objective: replace hard-coded availability and mocked freshness with backend met
 
 Objective: make the MVP user experience trustworthy and polished.
 
-- `[ ]` Verify Adams / Absentee Owners query, paging, filtering, map, and exports against current backend output.
+- `[x]` Verify Adams / Absentee Owners query, paging, filtering, map, and exports against current backend output.
 - `[ ]` Confirm city filtering includes backend self-describing values such as `Unincorporated`.
 - `[ ]` Confirm `No Situs Address` rows behave acceptably in table/map/filter/export flows.
 - `[ ]` Review mobile and desktop dashboard ergonomics.
 - `[ ]` Add user-facing handling for no results, oversized results, timeouts, expired staged results, and Uplink failures.
+- `[x]` Remove the attempted direct BigQuery fallback from Anvil; the Anvil runtime does not include the required BigQuery client libraries, so Uplink remains the supported data path.
 
 ## Phase 5: Expansion Readiness
 
