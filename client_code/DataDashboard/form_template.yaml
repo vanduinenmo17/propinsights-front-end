@@ -115,7 +115,7 @@ components_by_slot:
       type: FlowPanel
     - layout_properties: {grid_position: 'DRNSAQ,WTFWNA'}
       name: tabulator
-      properties: {auto_columns: true, header_visible: true, pagination_size: 50, visible: false}
+      properties: {auto_columns: false, header_visible: true, pagination_size: 50, visible: false}
       type: form:dep_m2uwz4e9aqkor2:Tabulator
     layout_properties: {}
     name: dashboard_panel

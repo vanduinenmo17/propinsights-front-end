@@ -372,19 +372,17 @@ class DataDashboard(DataDashboardTemplate):
     else:
       out = anvil.server.call('get_result_page', self._result_id, page, self._page_size)
   
-    rows = out.get("rows", [])
+    rows = self._ordered_rows(out.get("rows", []))
     self._total_rows = int(out.get("row_count", self._total_rows) or 0)
   
     if rows and not self._fields_populated:
       self.fields_dropdown.items = list(rows[0].keys())
       self._fields_populated = True
   
+    if rows:
+      self._apply_columns_from_order(rows[0])
     self.tabulator.replace_data(rows)
     self.tabulator.data = rows
-    # ensure columns are applied once we have a sample row
-    if rows and not getattr(self, "_columns_applied", False):
-      self._apply_columns_from_order(rows[0])
-      self._columns_applied = True
     self.tabulator.redraw(True)
   
     # If you’re showing the global clustered map, don’t overwrite it
@@ -439,14 +437,9 @@ class DataDashboard(DataDashboardTemplate):
       self._load_page(self._current_page + 1)
 
   def _apply_columns_from_order(self, sample_row: dict):
-    order = [
-    'Address','City','County','State','OwnerName','OwnerAddress','OwnerCity','OwnerState',
-    'OwnerZip','BuildingDescription','SF','Bedrooms','Bathrooms','YearBuilt','AssessedValue',
-    'LastSalesPrice','LastSalesDate','LAT','LON'
-  ]
     # keep only fields that exist in the data, then append any extras
-    existing = [f for f in order if f in sample_row]
-    extras = [f for f in sample_row.keys() if f not in order]
+    existing = [f for f in utils.DATA_LIST_COLUMNS if f in sample_row]
+    extras = [f for f in sample_row.keys() if f not in utils.DATA_LIST_COLUMNS]
     fields_in_order = existing + extras
   
     cols = []
@@ -464,6 +457,19 @@ class DataDashboard(DataDashboardTemplate):
   
     # Apply to Tabulator; in Anvil this property updates the underlying setColumns
     self.tabulator.columns = cols
+
+  def _ordered_rows(self, rows):
+    ordered = []
+    for row in rows or []:
+      ordered_row = {}
+      for field in utils.DATA_LIST_COLUMNS:
+        if field in row:
+          ordered_row[field] = row[field]
+      for field, value in row.items():
+        if field not in ordered_row:
+          ordered_row[field] = value
+      ordered.append(ordered_row)
+    return ordered
 
   def _dropdown_items(self, options):
     items = []
