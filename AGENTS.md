@@ -12,6 +12,14 @@ https://www.notion.so/2feea071fbd2808fbea0eb115f55d6db
 
 Local docs are frontend working instructions. If local context conflicts with the Notion hub, prefer Notion and update local docs when frontend instructions need to change.
 
+## Documentation Hygiene
+
+- Prefer updating existing docs over creating new docs.
+- Create new folders only for a real ownership boundary, an established repo pattern, or several related files.
+- Keep repo docs focused on frontend execution details; keep cross-repo roadmap and product context in Notion.
+- Do not commit scratch logs, generated outputs, local exports, temporary notes, or one-off investigation dumps.
+- When Notion and local docs conflict, prefer Notion for cross-repo truth and update local docs only for frontend-specific execution changes.
+
 ## Operating Model
 
 - Read existing Anvil forms/helpers before changing behavior.
